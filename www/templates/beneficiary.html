@@ -1,0 +1,14 @@
+<ion-view view-title="Beneficiary" ng-controller="BeneficiaryController">
+    <ion-content>
+        <ul class="list">
+            <div class="item item-divider" ng-if="authorizationData.tokenType == 2">Administration</div>
+
+            <a class="item " ng-click="showLogOutMenu()" ng-if="authorizationData.tokenType == 2">Provision Card</a>
+            <a class="item " ng-click="showLogOutMenu()" ng-if="authorizationData.tokenType == 2">List Beneficiary Information</a>
+
+            <div class="item item-divider">Card Loads</div>
+            <a class="item " ng-click="showLogOutMenu()">Check Card Balance</a>
+
+        </ul>
+    </ion-content>
+</ion-view>

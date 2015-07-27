@@ -1,0 +1,46 @@
+<ion-side-menus enable-menu-with-back-views="false">
+  <ion-side-menu-content class="post-size-14px">
+    <ion-nav-bar class="bar bar-dark">
+      <ion-nav-back-button>
+      </ion-nav-back-button>
+      <ion-nav-buttons side="left">
+        <button class="button button-icon button-clear ion-navicon" menu-toggle="left">
+        </button>
+      </ion-nav-buttons>
+    </ion-nav-bar>
+    <ion-nav-view name="menuContent"></ion-nav-view>
+  </ion-side-menu-content>
+
+  <ion-side-menu side="left" class="main-menu" expose-aside-when="large">
+    <ion-content>
+      <ion-list class="padding-top">
+        <ion-item class="item-icon-left" nav-clear menu-close ui-sref="app.pos">
+          <i class="icon ion-calculator"></i>
+          <h2 class="menu-text">POS Mode</h2>
+        </ion-item>
+        <ion-item class="item-icon-left" nav-clear menu-close ui-sref="app.beneficiary">
+          <i class="icon ion-person"></i>
+          <h2 class="menu-text">Beneficiary</h2>
+        </ion-item>
+        <ion-item class="item-icon-left" nav-clear menu-close ui-sref="app.receipts">
+          <i class="icon ion-document-text"></i>
+          <h2 class="menu-text">Receipts</h2>
+        </ion-item>
+        <ion-item class="item-icon-left" nav-clear menu-close ui-sref="app.invoices">
+          <i class="icon ion-document"></i>
+          <h2 class="menu-text">Invoices</h2>
+        </ion-item>
+        <ion-item class="item-icon-left" nav-clear menu-close ui-sref="app.sync">
+          <i class="icon ion-android-sync"></i>
+          <h2 class="menu-text">Sync Data</h2>
+        </ion-item>
+
+        <ion-item class="item-icon-left" nav-clear menu-close ui-sref="app.settings">
+          <i class="icon ion-gear-a"></i>
+          <h2 class="menu-text">Settings</h2>
+        </ion-item>
+
+    </ion-list>
+    </ion-content>
+  </ion-side-menu>
+</ion-side-menus>

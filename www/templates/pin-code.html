@@ -1,0 +1,69 @@
+<ion-modal-view ng-init="init()" ng-controller="PinController">
+    <ion-content class="center-vertical">
+        <div>
+            <div style="text-align: center">
+                <h1>Enter Pin</h1>
+            </div>
+            <div class="row" style="text-align: center">
+                <div class="col col-10 col-offset-15" style="border-bottom: 1px solid black">
+                    {{(passcode.length>=1&&"*") || "&nbsp;"}}
+                </div>
+                <div class="col col-10 col-offset-10" style="border-bottom: 1px solid black">
+                    {{(passcode.length>=2&&"*") || "&nbsp;"}}
+                </div>
+                <div class="col col-10 col-offset-10" style="border-bottom: 1px solid black">
+                    {{(passcode.length>=3&&"*") || "&nbsp;"}}
+                </div>
+                <div class="col col-10 col-offset-10" style="border-bottom: 1px solid black">
+                    {{(passcode.length>=4&&"*") || "&nbsp;"}}
+                </div>
+            </div>
+        </div>
+        <div style="margin-top: 50px">
+            <div class="row">
+                <div class="col col-20 col-offset-20">
+                    <button class="button button-light button-stretch" ng-click="add(1)">1</button>
+                </div>
+                <div class="col col-20">
+                    <button class="button button-light button-stretch" ng-click="add(2)">2</button>
+                </div>
+                <div class="col col-20">
+                    <button class="button button-light button-stretch" ng-click="add(3)">3</button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col col-20 col-offset-20">
+                    <button class="button button-light button-stretch" ng-click="add(4)">4</button>
+                </div>
+                <div class="col col-20">
+                    <button class="button button-light button-stretch" ng-click="add(5)">5</button>
+                </div>
+                <div class="col col-20">
+                    <button class="button button-light button-stretch" ng-click="add(6)">6</button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col col-20 col-offset-20">
+                    <button class="button button-light button-stretch" ng-click="add(7)">7</button>
+                </div>
+                <div class="col col-20">
+                    <button class="button button-light button-stretch" ng-click="add(8)">8</button>
+                </div>
+                <div class="col col-20">
+                    <button class="button button-light button-stretch" ng-click="add(9)">9</button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col col-20 col-offset-20">
+                    <button class="button button-assertive button-stretch icon ion-close" ng-click="cancel()"></button>
+                </div>
+                <div class="col col-20">
+                    <button class="button button-light button-stretch" ng-click="add(0)">0</button>
+                </div>
+                <div class="col col-20">
+                    <button class="button icon ion-arrow-left-a button-light button-stretch" ng-click="delete()"></button>
+                </div>
+            </div>
+        </div>
+    </ion-content>
+    </ion-view>
