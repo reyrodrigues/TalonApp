@@ -1,0 +1,19 @@
+<ion-view view-title="View Beneficiary" ng-controller="ViewBeneficiaryController">
+    <ion-content class="padding">
+        <div class="row">
+            <strong>Name:</strong> &nbsp; {{ beneficiary.Name }}
+        </div>
+        <div class="row">
+            <strong>Mobile Number:</strong> &nbsp; {{ beneficiary.MobileNumber }}
+        </div>
+        <div class="row">
+            <strong>Location:</strong> &nbsp; {{ beneficiary.Location.Name }}
+        </div>
+        <button class="button button-block button-positive" ng-click="provisionCard()">
+            Provision Card
+        </button>
+        <button class="button button-block button-positive">
+            View Transaction History
+        </button>
+    </ion-content>
+</ion-view>

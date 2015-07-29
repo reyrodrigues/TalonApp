@@ -3,7 +3,7 @@
 // angular.module is a global place for creating, registering and retrieving Angular modules
 // 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
 // the 2nd parameter is an array of 'requires'
-angular.module('talon', ['ionic', 'talon.services', 'talon.constants', 'talon.controllers', 'talon.factories'])
+angular.module('talon', ['ionic', 'talon.services', 'talon.constants', 'talon.controllers', 'talon.factories', 'talon.directives'])
 
 .run(function ($ionicPlatform) {
     $ionicPlatform.ready(function () {
@@ -51,6 +51,23 @@ angular.module('talon', ['ionic', 'talon.services', 'talon.constants', 'talon.co
         }
     })
 
+    .state('app.list-beneficiaries', {
+            url: '/list-beneficiaries',
+            views: {
+                'menuContent': {
+                    templateUrl: 'templates/list-beneficiaries.html'
+                }
+            }
+        })
+     .state('app.view-beneficiary', {
+         url: '/view-beneficiary/:id',
+         views: {
+             'menuContent': {
+                 templateUrl: 'templates/view-beneficiary.html'
+             }
+         }
+     })
+
     .state('app.receipts', {
         url: '/receipts',
         views: {
@@ -73,7 +90,7 @@ angular.module('talon', ['ionic', 'talon.services', 'talon.constants', 'talon.co
         url: '/sync',
         views: {
             'menuContent': {
-                templateUrl: 'templates/blank.html'
+                templateUrl: 'templates/sync.html'
             }
         }
     })

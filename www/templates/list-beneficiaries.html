@@ -1,0 +1,10 @@
+<ion-view view-title="Select Beneficiary" hide-back-button="false" ng-controller="ListBeneficiaryController">
+    <ion-content>
+        <div class="bar bar-header bar-dark item-input-inset">
+            <ion-search class="search-wrapper-light" placeholder="Search" min-length="1" model="users" source="getBeneficiariesByName(str)"></ion-search>
+        </div>
+        <div class="list">
+                <a ng-repeat="beneficiary in beneficiaries" class="item" ui-sref="app.view-beneficiary({id:beneficiary.Id})">{{beneficiary.Name}}</a>
+        </div>
+    </ion-content>
+</ion-view>

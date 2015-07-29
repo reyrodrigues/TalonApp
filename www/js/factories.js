@@ -1,13 +1,13 @@
 angular
-.module('talon.factories', [
- 'ngStorage',
- 'ngCordova',
- 'talon.services'
-])
+    .module('talon.factories', [
+        'ngStorage',
+        'ngCordova',
+        'talon.services'
+    ])
 
 .factory('deviceIdIntereceptor', ['$q', '$injector', '$cordovaDevice', '$localStorage', function AuthInterceptor($q, $injector, $cordovaDevice, $localStorage) {
- // Adding the UUID to the requrests for authentication purposes
- // Token auth should be used as well
+    // Adding the UUID to the requrests for authentication purposes
+    // Token auth should be used as well
 
     var deviceIdIntereceptorFactory = {};
 
@@ -44,7 +44,27 @@ angular
 
         var authData = $localStorage.authorizationData;
         if (authData) {
-            config.headers.Authorization = 'Token ' + authData.token;
+            config.headers.Authorization = ($localStorage.authorizationData.tokenType == 1 ? 'Token ' : 'Bearer ') + authData.token;
+        }
+        if ($localStorage.currentUser) {
+            if ($localStorage.authorizationData && $localStorage.authorizationData.tokenType == 2) {
+                if ($localStorage.currentUser.Organization) {
+                    var organizationId = $localStorage.currentUser.Organization.Id;
+                    config.headers['X-Tenant-Organization'] = organizationId;
+
+                }
+            }
+
+            if ($localStorage.authorizationData && $localStorage.authorizationData.tokenType == 1) {
+                var vendorId = $localStorage.currentUser.Id;
+            }
+
+
+            if ($localStorage.country) {
+                var countryId = $localStorage.country.Id;
+                config.headers['X-Tenant-Country'] = countryId;
+            }
+
         }
 
         return config;
@@ -52,10 +72,6 @@ angular
 
     var _responseError = function (rejection) {
         if (rejection.status === 401) {
-            var authService = $injector.get('adminAuthentication');
-
-            authService.logOut();
-            $rootScope.$emit('logged-out');
         }
         return $q.reject(rejection);
     };
@@ -64,5 +80,4 @@ angular
     authInterceptorServiceFactory.responseError = _responseError;
 
     return authInterceptorServiceFactory;
-}])
-;
+}]);

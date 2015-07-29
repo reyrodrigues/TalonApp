@@ -4,7 +4,7 @@ angular.module('talon.controllers', [
         'ngCordova'
     ])
     .controller('AppController', function AppController($scope, beneficiaryData, $timeout, $rootScope,
-        $ionicPlatform, $nfcTools, $localStorage, $ionicModal, $q, $cordovaSpinnerDialog) {
+        $ionicPlatform, $nfcTools, $localStorage, $ionicModal, $q, $cordovaSpinnerDialog, adminAuthentication) {
         $scope.pin = $scope.$new();
         $scope.login = $scope.$new();
 
@@ -31,7 +31,19 @@ angular.module('talon.controllers', [
             });
         } else {
             $rootScope.authorizationData = $localStorage.authorizationData;
+            if ($localStorage.authorizationData.tokenType == 2 && !$rootScope.currentUser) {
+                adminAuthentication.loadUserData();
+            }
         }
+        $scope.readIdIso = function () {
+            if (window.nfcTools) {
+                window.nfcTools.isoDepReadIdFromTag(function () {
+                    console.log('success');
+                }, function () {
+                    console.log('Error');
+                })
+            }
+        };
 
         $scope.setupVendor = function () {
             beneficiaryData.loadKeys().then(function (keys) {
@@ -93,6 +105,18 @@ angular.module('talon.controllers', [
 
         function showLoginModal() {
             $scope.login.deferred = $q.defer();
+
+            delete $localStorage.authorizationData;
+            delete $rootScope.authorizationData;
+
+            delete $localStorage.currentUser;
+            delete $rootScope.currentUser;
+
+            delete $localStorage.organization;
+            delete $rootScope.organization;
+
+            delete $localStorage.country;
+            delete $rootScope.country;
 
             if ($scope.login.modal)
                 $scope.login.modal.show();
@@ -183,11 +207,13 @@ angular.module('talon.controllers', [
 
         $scope.loginAdmin = function LoginAdmin() {
             adminAuthentication.login($scope.loginData.username, $scope.loginData.password).then(function () {
-                    $scope.deferred.resolve();
-                    $scope.modal.hide();
-                    $scope.wrongPassword = false;
-                    $scope.loginData = {};
                     $rootScope.authorizationData = $localStorage.authorizationData;
+                    adminAuthentication.loadUserData().then(function () {
+                        $scope.deferred.resolve();
+                        $scope.modal.hide();
+                        $scope.wrongPassword = false;
+                        $scope.loginData = {};
+                    });
                 })
                 .catch(function () {
                     $scope.wrongPassword = true;
@@ -207,20 +233,103 @@ angular.module('talon.controllers', [
                 });
         }
     })
-    .controller('SettingsController', function SettingsController($scope, $localStorage, $ionicModal) {
+    .controller('SettingsController', function SettingsController($scope, $localStorage, $rootScope) {
+        $scope.country = $rootScope.country;
         $scope.logout = logout;
+        $scope.updateCountry = updateCountry;
+
+        function updateCountry(country) {
+            $localStorage.country = country;
+            console.log(country);
+        }
 
         function logout() {
             delete $localStorage.authorizationData;
             $scope.showLoginModal();
         }
     })
-    .controller('BeneficiaryController', function SettingsController($scope, $localStorage, $ionicModal) {
+    .controller('BeneficiaryController', function BeneficiaryController($scope, $localStorage, $ionicModal, $cordovaSpinnerDialog, beneficiaryData) {
+        $scope.reloadCard = reloadCard;
+        $scope.readCard = readCard;
+
+        function reloadCard() {
+            var afterTimeout = function (argument) {
+             console.log(arguments);
+                $cordovaSpinnerDialog.hide();
+            };
+
+            $scope.showPinModal().then(function (pin) {
+                $cordovaSpinnerDialog.show('Read Card', 'Please hold NFC card close to reader', true);
+                beneficiaryData.reloadCard(pin).then(function() {
+                 $cordovaSpinnerDialog.hide();
+                }).catch(afterTimeout);
+            }).catch(afterTimeout);
+        }
+
+
+        function readCard() {
+            var afterTimeout = function (argument) {
+                $cordovaSpinnerDialog.hide();
+            };
+
+            $scope.showPinModal().then(function (pin) {
+                $cordovaSpinnerDialog.show('Read Card', 'Please hold NFC card close to reader', true);
+                beneficiaryData.fetchBeneficiary().then(function (beneficiary) {
+                    beneficiaryData.readCard(beneficiary.CardKey, pin).then(function (info) {
+                        $scope.cardInfo = info;
+                        console.log(info);
+
+                        $cordovaSpinnerDialog.hide();
+                    }).catch(afterTimeout);
+                }).catch(afterTimeout);
+            }).catch(afterTimeout);
+        }
+
+    })
+    .controller('ListBeneficiaryController', function ListBeneficiaryController($scope, $localStorage, $q, $timeout, $http, talonRoot) {
+        $scope.beneficiaries = [];
         $scope.provisionCard = ProvisionCard;
+        $scope.getBeneficiariesByName = getBeneficiariesByName;
+
+        var timeout = null;
+
+        function getBeneficiariesByName(name) {
+            if (timeout) {
+                $timeout.cancel(timeout);
+            }
+
+            timeout = $timeout(function () {
+                var filter = '$filter=startswith(tolower(FirstName), \'' + encodeURIComponent(name.toLowerCase()) + '\') or ' + 'startswith(tolower(LastName), \'' + encodeURIComponent(name.toLowerCase()) + '\')';
+
+                $http.get(talonRoot + 'Breeze/EVM/Beneficiaries?' + filter).then(function (res) {
+                    $scope.beneficiaries = res.data;
+                });
+                timeout = null;
+            }, 500);
+
+            return timeout;
+        }
 
         function ProvisionCard() {
             var beneficiaryId = prompt('beneficiaryId');
 
             beneficiaryData.provisionBeneficiary(beneficiaryId).then(function () {});
+        };
+    })
+    .controller('ViewBeneficiaryController', function ViewBeneficiaryController($scope, $localStorage, $q, $timeout, $http, $state, talonRoot, beneficiaryData) {
+        $scope.provisionCard = function () {
+            var beneficiaryId = $scope.beneficiary.Id;
+
+            beneficiaryData.provisionBeneficiary(beneficiaryId).then(function () {});
+        };
+
+        $http.get(talonRoot + 'Breeze/EVM/Beneficiaries?$expand=Location&$filter=Id eq ' + $state.params.id + '').then(function (res) {
+            $scope.beneficiary = res.data[0];
+        });
+    })
+    .controller('SyncController', function SyncController($scope, $localStorage, beneficiaryData) {
+
+        $scope.setupVendor = function () {
+         beneficiaryData.sync();
         };
     });

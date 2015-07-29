@@ -1,17 +1,27 @@
 angular.module('talon.services', [
         'ngStorage',
         'talon.constants',
-        'pouchdb',
-        'cordovaHTTP'
+        'pouchdb'
     ])
-    .service('beneficiaryData', function beneficiaryData($http, $localStorage, pouchDB, pouchDBDecorators, $q, talonRoot, $nfcTools, $ionicPlatform) {
+    .service('beneficiaryData', function beneficiaryData($http, $localStorage, pouchDB, pouchDBDecorators, $q, talonRoot,
+        $nfcTools, $ionicPlatform, $timeout, $cordovaFile, $cordovaFileTransfer) {
         var keyDB = pouchDB('keyStore', {
             adapter: 'websql'
         });
-        keyDB.find = pouchDBDecorators.qify(keyDB.find);
-        keyDB.upsert = pouchDBDecorators.qify(keyDB.upsert);
-        keyDB.putIfNotExists = pouchDBDecorators.qify(keyDB.putIfNotExists);
-        keyDB.createIndex = pouchDBDecorators.qify(keyDB.createIndex);
+
+        var cardLoadDB = pouchDB('cardLoadStore', {
+            adapter: 'websql'
+        });
+
+        var cardLoadHistoryDB = pouchDB('cardLoadHistoryStore', {
+            adapter: 'websql'
+        });
+
+        var transactionHistoryDB = pouchDB('transactionHistoryStore', {
+            adapter: 'websql'
+        });
+
+
         keyDB.createIndex({
             index: {
                 fields: ['CardId']
@@ -23,21 +33,25 @@ angular.module('talon.services', [
             }
         });
 
-        var cardLoadDB = pouchDB('cardLoadStore', {
-            adapter: 'websql'
+        cardLoadDB.createIndex({
+            index: {
+                fields: ['CardId']
+            }
         });
-        cardLoadDB.find = pouchDBDecorators.qify(cardLoadDB.find);
-        cardLoadDB.upsert = pouchDBDecorators.qify(cardLoadDB.upsert);
-        cardLoadDB.putIfNotExists = pouchDBDecorators.qify(cardLoadDB.putIfNotExists);
-        cardLoadDB.createIndex = pouchDBDecorators.qify(cardLoadDB.createIndex);
 
+
+        updatePouchDB(keyDB);
+        updatePouchDB(cardLoadDB);
+        updatePouchDB(transactionHistoryDB);
+        updatePouchDB(cardLoadHistoryDB);
 
         return {
-            loadKeys: LoadKeys,
-            loadKeysFromLocalNetwork: LoadKeysFromLocalNetwork,
+            reloadCard: ReloadCard,
 
+            loadKeys: LoadKeys,
             loadCardLoads: LoadCardLoads,
-            loadCardLoadsFromLocalNetwork: LoadCardLoadsFromLocalNetwork,
+
+            sync: Sync,
 
             updateCard: UpdateCard,
             readCard: ReadCard,
@@ -45,6 +59,27 @@ angular.module('talon.services', [
             provisionBeneficiary: ProvisionBeneficiary,
             fetchBeneficiary: FetchBeneficiary
         };
+
+        function Sync() {
+            var def = $q.defer();
+            CheckConnectivity().then(function () {
+                LoadKeys().then(function () {
+                    LoadCardLoads().then(function () {
+                        $http.get(talonRoot + 'api/App/MobileClient/DownloadKeyset')
+                            .then(function (keyset) {
+                                $localStorage.keyset = keyset.data;
+                                def.resolve();
+
+                            })
+                            .catch(def.resolve.bind(def));
+                    });
+                });
+            }).catch(function () {
+                LoadPayloadFromNetwork().then(def.resolve.bind(def));
+            })
+
+            def.promise
+        }
 
         function FetchBeneficiary() {
             var def = $q.defer();
@@ -73,7 +108,7 @@ angular.module('talon.services', [
             $ionicPlatform.ready(function () {
                 $nfcTools.acr35ReadIdFromTag().then(function (result) {
                     var id = result[0];
-                    $http.post(talonRoot + 'api/App/Administration/ProvisionBeneficiary', {
+                    $http.post(talonRoot + 'api/App/MobileClient/ProvisionBeneficiary', {
                         'beneficiaryId': beneficiaryId,
                         'cardId': id
                     }).then(function (k) {
@@ -87,7 +122,7 @@ angular.module('talon.services', [
                             };
                         });
 
-                        $http.get(talonRoot + 'api/App/Administration/GenerateInitialLoad?beneficiaryId=' + key.BeneficiaryId).then(function (res) {
+                        $http.get(talonRoot + 'api/App/MobileClient/GenerateInitialLoad?beneficiaryId=' + key.BeneficiaryId).then(function (res) {
                             var payload = res.data;
                             payload = forge.util.createBuffer(forge.util.decode64(payload), 'raw').toHex();
                             $nfcTools.acr35WriteDataIntoTag(payload).then(function (result) {
@@ -103,90 +138,151 @@ angular.module('talon.services', [
             return def.promise
         }
 
+        // Reload Card
+        function ReloadCard(pin) {
+            var def = $q.defer();
+            FetchBeneficiary().then(function (beneficiary) {
+                ReadCard(beneficiary.CardKey, pin).then(function (cardInfo) {
+                    cardLoadDB.find({
+                        selector: {
+                            CardId: beneficiary.CardId
+                        }
+                    }).then(function (res) {
+                        var loads = res.docs[0].Load;
+
+                        var data = loads.map(function (d) {
+                            var encryptedData = forge.util.decode64(d);
+                            var decrypted = decrypt(encryptedData, pin, beneficiary.CardKey);
+                            if (!decrypted)
+                                throw new Error();
+
+                            var values = decrypted.split('|');
+                            return [parseFloat(values[1], 10), moment.unix(parseInt(values[2], 16))];
+                        });
+
+                        var since = moment.unix(cardInfo[1]);
+
+                        var load = data
+                            .filter(function (d) {
+                                return d[1] > since;
+                            })
+                            .reduce(function (a, b) {
+                                // Sum first item
+                                // Get largest of the second
+                                return [a[0] + b[0], a[1] > b[1] ? a[1] : b[1]];
+                            }, [0, 0]);
+
+                        var payload = '1933|' + (load[0] + cardInfo[0]) + '|' + load[1].unix().toString(16);
+                        $timeout(function () {
+                            UpdateCard(payload, beneficiary.CardKey, pin)
+                                .then(function (update) {
+                                    def.resolve();
+                                }).catch(def.reject.bind(def));
+                        }, 500);
+                    }).catch(def.reject.bind(def));
+                }).catch(def.reject.bind(def));
+            }).catch(def.reject.bind(def));
+
+            return def.promise;
+        }
+
+        function CheckConnectivity() {
+            var def = $q.defer();
+            $http.get(talonRoot + 'api/App/MobileClient/IsAlive').then(function (r) {
+                if (r.status === 200) {
+                    def.reject();
+                } else {
+                    def.resolve();
+                }
+            }).catch(def.reject.bind(def));
+
+            return def.promise;
+        }
+
+
+        function LoadPayloadFromNetwork() {
+            var def = $q.defer();
+
+            $ionicPlatform.ready(function () {
+                var uri = encodeURI("http://10.10.10.254/data/UsbDisk1/Volume1/Talon/" + $localStorage.country.IsoAlpha3 + ".zip");
+
+                var localDirUri = cordova.file.tempDirectory || cordova.file.cacheDirectory;
+                var logError = function (error) {
+                    console.log(error);
+                    def.reject();
+                }
+
+                $cordovaFile.createFile(localDirUri, 'load.zip', true).then(function (fileEntry) {
+                    $cordovaFileTransfer.download(uri, fileEntry.toURL())
+                        .then(function (entry) {
+                            $cordovaFile.readAsArrayBuffer(localDirUri, 'load.zip').then(function (file) {
+                                var zip = new JSZip(file);
+                                var cardLoads = decryptRsaData(zip.file("CardLoads.b64").asText());
+                                var beneficiaryKeys = decryptRsaData(zip.file("BeneficiaryKeys.b64").asText());
+
+                                LoadCardLoadsInternal(JSON.parse(cardLoads)).then(function () {
+                                    LoadKeysInternal(JSON.parse(beneficiaryKeys)).then(function () {
+                                        $cordovaFile.removeFile(localDirUri, 'load.zip').then(function () {
+                                            console.log('Loaded from wifi storage');
+
+                                            def.resolve();
+                                        }).catch(logError)
+                                    }).catch(logError);
+                                }).catch(logError);
+                            }).catch(logError);
+                        }).catch(logError);
+                }).catch(logError)
+            });
+
+
+            return def.promise;
+        }
+
         // Key Data
         function LoadKeys() {
-            var def = $q.defer();
-            $http.get(talonRoot + 'api/App/Administration/IsAlive').then(function () {
-                LoadKeysFromInternet().then(function () {
-                    def.resolve.apply(def, arguments);
-                });
-            }).catch(function () {
-                LoadKeysFromLocalNetwork().then(function () {
-                    def.resolve.apply(def, arguments);
-                });
-            });
-
-            return def.promise;
-        }
-
-        function LoadKeysFromInternet() {
             console.log('Internet');
 
-            return $http.get(talonRoot + 'api/App/Administration/DownloadBeneficiaryKeys').then(function (k) {
-                return $q.all(k.data.map(function (key) {
-                    return keyDB.upsert(key._id, function (d) {
-                        return {
-                            BeneficiaryId: key.BeneficiaryId,
-                            CardId: key.CardId,
-                            CardKey: key.CardKey
-                        };
-                    }).then(function () {
-                        return key;
-                    });
-                }));
+            return $http.get(talonRoot + 'api/App/MobileClient/DownloadBeneficiaryKeys').then(function (k) {
+                return LoadKeysInternal(k.data);
             });
         }
 
-        function LoadKeysFromLocalNetwork() {
-            console.log('Network');
-
-            var def = $q.defer();
-            def.resolve({});
-            return def.promise;
+        function LoadKeysInternal(data) {
+            return $q.all(data.map(function (key) {
+                return keyDB.upsert(key._id, function (d) {
+                    return {
+                        BeneficiaryId: key.BeneficiaryId,
+                        CardId: key.CardId,
+                        CardKey: key.CardKey
+                    };
+                }).then(function () {
+                    return key;
+                });
+            }));
         }
+
         // Card Load
-
         function LoadCardLoads() {
-            var def = $q.defer();
-            $http.get(talonRoot + 'api/App/Administration/IsAlive').then(function () {
-                LoadCardLoadsFromInternet().then(function () {
-                    def.resolve.apply(def, arguments);
-                });
-            }).catch(function () {
-                LoadCardLoadsFromLocalNetwork().then(function () {
-                    def.resolve.apply(def, arguments);
-                });
-            });
-
-            return def.promise;
-        }
-
-        function LoadCardLoadsFromInternet() {
             console.log('Internet');
-            return $http.get(talonRoot + 'api/App/Administration/GenerateCardLoads')
+            return $http.get(talonRoot + 'api/App/MobileClient/GenerateCardLoads')
                 .then(function (r) {
-
-                    return $q.all(r.data.map(function (load) {
-                        return cardLoadDB.upsert(load._id, function (d) {
-                            return {
-                                CardId: load.CardId,
-                                Load: load.Load
-                            };
-                        }).then(function () {
-                            return load;
-                        });
-                    }));
-
+                    return LoadCardLoadsInternal(r.data);
                 });
         }
 
-        function LoadCardLoadsFromLocalNetwork() {
-            console.log('Network');
-
-            var def = $q.defer();
-            def.resolve({});
-            return def.promise;
+        function LoadCardLoadsInternal(data) {
+            return $q.all(data.map(function (load) {
+                return cardLoadDB.upsert(load._id, function (d) {
+                    return {
+                        CardId: load.CardId,
+                        Load: load.Load
+                    };
+                }).then(function () {
+                    return load;
+                });
+            }));
         }
+
 
         function ReadCard(key, pin) {
             var def = $q.defer();
@@ -225,6 +321,15 @@ angular.module('talon.services', [
             return def.promise;
         }
 
+        function updatePouchDB(db) {
+            // Update plugin methods to use $q
+
+            db.find = pouchDBDecorators.qify(db.find);
+            db.upsert = pouchDBDecorators.qify(db.upsert);
+            db.putIfNotExists = pouchDBDecorators.qify(db.putIfNotExists);
+            db.createIndex = pouchDBDecorators.qify(db.createIndex);
+        }
+
         function encrypt(data, pin, key) {
             var cipher = forge.cipher.createCipher('AES-CBC', forge.util.createBuffer(forge.util.decode64(key), 'raw'));
             cipher.start({
@@ -248,6 +353,54 @@ angular.module('talon.services', [
             } else {
                 return null;
             }
+        }
+
+        function decryptRsaData(data) {
+            // The vendor has their own private key
+            var keyPEM = $localStorage.keyset.Vendor;
+            var privateKey = forge.pki.privateKeyFromPem(keyPEM);
+
+            // the data is AES-CBC encrypted but the key and IV are RSA'd
+            var payload = data.split('|');
+            var key = privateKey.decrypt(forge.util.decode64(payload[1]), 'RSA-OAEP');
+            var iv = privateKey.decrypt(forge.util.decode64(payload[2]), 'RSA-OAEP');
+
+            var decipher = forge.cipher.createDecipher('AES-CBC', forge.util.createBuffer(key, 'raw'));
+            decipher.start({
+                iv: forge.util.createBuffer(iv, 'raw')
+            });
+            decipher.update(forge.util.createBuffer(forge.util.decode64(payload[0]), 'raw'));
+
+            if (decipher.finish()) {
+                return decipher.output.toString();
+            } else {
+                return null;
+            }
+        }
+
+        function encryptRsaData(data) {
+            var key = forge.random.getBytesSync(16);
+            var iv = forge.random.getBytesSync(16);
+            var bytes = forge.util.createBuffer(data, 'utf8');
+
+            var keyPEM = $localStorage.keyset.Server;
+            var privateKey = forge.pki.publicKeyFromPem(keyPEM);
+
+            var cipher = forge.cipher.createCipher('AES-CBC', key);
+
+            cipher.start({
+                iv: iv
+            });
+            cipher.update(forge.util.createBuffer(bytes));
+            cipher.finish();
+            var encrypted = forge.util.encode64(forge.util.hexToBytes(cipher.output.toHex()));
+            var result = [
+                encrypted,
+                forge.util.encode64(privateKey.encrypt(key, 'RSA-OAEP')),
+                forge.util.encode64(privateKey.encrypt(iv, 'RSA-OAEP'))
+            ]
+
+            return result.join('|');
         }
     })
     .service('$nfcTools', function ($timeout, $q) {
@@ -292,6 +445,9 @@ angular.module('talon.services', [
             },
             acr35ReadIdFromTag: function () {
                 return makePromise(window.nfcTools.acr35ReadIdFromTag, [], true);
+            },
+            isoDepReadIdFromTag: function () {
+                return makePromise(window.nfcTools.isoDepReadIdFromTag, [], true);
             }
         };
 
@@ -299,46 +455,86 @@ angular.module('talon.services', [
     })
     .service('vendorAuthentication', function ($http, $q, talonRoot, $cordovaDevice, $localStorage, $rootScope) {
         var vendorAuthServiceFactory = {
-            login: function (userName, password) {
-                var device = {};
-                if (window.device) {
-                    device = $cordovaDevice.getDevice();
-                } else {
-                 device.uuid = '00:00:00:00';
-                }
-
-                var payload = {
-                    UserName: userName,
-                    Password: password,
-                    Device: device
-                }
-
-                var deferred = $q.defer();
-
-                $http.post(talonRoot + 'api/App/VendorProfile/Login', payload)
-                    .then(function (response) {
-                        if (response.status == 200) {
-                            $localStorage.authorizationData = {
-                                userName: payload.UserName,
-                                token: response.data.token,
-                                uuid: device.UUID || device.uuid,
-                                tokenType: 1
-                            };
-
-                            deferred.resolve($localStorage.authorizationData);
-                        } else {
-                            deferred.reject(response.data);
-                        }
-                    })
-                    .catch(function (err, status) {
-                        deferred.reject(err);
-                    })
-
-                return deferred.promise;
-            }
+            login: login
         };
 
         return vendorAuthServiceFactory;
+
+        function login(userName, password) {
+            var device = {};
+            if (window.device) {
+                device = $cordovaDevice.getDevice();
+            } else {
+                device.uuid = '00:00:00:00';
+            }
+
+            var payload = {
+                UserName: userName,
+                Password: password,
+                Device: device
+            }
+
+            var deferred = $q.defer();
+
+            $http.post(talonRoot + 'api/App/VendorProfile/Login', payload)
+                .then(function (response) {
+                    if (response.status == 200) {
+                        $localStorage.authorizationData = {
+                            userName: payload.UserName,
+                            token: response.data.token,
+                            uuid: device.UUID || device.uuid,
+                            tokenType: 1
+                        };
+
+                        loadVendorProfile(response.data.id).then(function () {
+                            deferred.resolve($localStorage.authorizationData);
+                        })
+                    } else {
+                        deferred.reject(response.data);
+                    }
+                })
+                .catch(function (err, status) {
+                    deferred.reject(err);
+                })
+
+            return deferred.promise;
+        }
+
+        function loadVendorProfile(vendorId) {
+            var deferred = $q.defer();
+            if ($localStorage.currentUser) {
+                $rootScope.currentUser = $localStorage.currentUser;
+
+                if (!$localStorage.country) {
+                    $localStorage.country = $rootScope.currentUser.Country;
+                }
+
+                $rootScope.country = $localStorage.country;
+
+                deferred.resolve();
+            } else {
+                $http.get(talonRoot + 'api/App/VendorProfile/LoadProfile')
+                    .then(function (response) {
+                        $rootScope.currentUser = response.data;
+                        $localStorage.currentUser = response.data;
+
+                        if (!$localStorage.country) {
+                            $localStorage.country = $rootScope.currentUser.Country;
+                        }
+
+                        $rootScope.country = $localStorage.country;
+
+                        deferred.resolve();
+                    })
+                    .catch(function () {
+                        console.log(arguments);
+                        deferred.reject(arguments);
+                    });
+            }
+
+            return deferred.promise;
+        }
+
     })
     .service('adminAuthentication', function AuthService($http, $localStorage, $q, $rootScope, talonRoot) {
         var serviceRoot = talonRoot;
@@ -346,7 +542,7 @@ angular.module('talon.services', [
         if (window.device) {
             device = $cordovaDevice.getDevice();
         } else {
-         device.uuid = '00:00:00:00';
+            device.uuid = '00:00:00:00';
         }
 
         return {
@@ -383,70 +579,91 @@ angular.module('talon.services', [
 
         function loadUserData() {
             var deferred = $q.defer();
-            $http.get(serviceRoot + 'api/Account/Me')
-                .then(function (response) {
-                    $rootScope.currentUser = response.data;
-
-                    $rootScope.organization = $rootScope.currentUser.Organization;
-                    $localStorage.organization = $rootScope.currentUser.Organization;
-                    var countries = $rootScope.currentUser.Countries.map(function (c) {
-                        return c.Country;
-                    });
-
-                    if (!$localStorage.country) {
-                        $localStorage.country = countries[0];
-                    }
-
-                    $rootScope.country = $localStorage.country;
-
-                    if ($rootScope.currentUser.Countries.length > 1) {
-                        $rootScope.availableCountries = countries;
-                    } else {
-                        $rootScope.availableCountries = false;
-                    }
-                    deferred.resolve();
-                })
-                .catch(function () {
-                    console.log(arguments);
-                    deferred.reject(arguments);
+            if ($localStorage.currentUser) {
+                $rootScope.currentUser = $localStorage.currentUser;
+                $rootScope.organization = $rootScope.currentUser.Organization;
+                var countries = $rootScope.currentUser.Countries.map(function (c) {
+                    return c.Country;
                 });
+
+                if (!$localStorage.country) {
+                    $localStorage.country = countries[0];
+                }
+
+                $rootScope.country = $localStorage.country;
+
+                if ($rootScope.currentUser.Countries.length > 1) {
+                    $rootScope.availableCountries = countries;
+                } else {
+                    $rootScope.availableCountries = false;
+                }
+                deferred.resolve();
+            } else {
+
+                $http.get(serviceRoot + 'api/Account/Me')
+                    .then(function (response) {
+                        $rootScope.currentUser = response.data;
+                        $localStorage.currentUser = response.data;
+
+                        $rootScope.organization = $rootScope.currentUser.Organization;
+                        $localStorage.organization = $rootScope.currentUser.Organization;
+                        var countries = $rootScope.currentUser.Countries.map(function (c) {
+                            return c.Country;
+                        });
+
+                        if (!$localStorage.country) {
+                            $localStorage.country = countries[0];
+                        }
+
+                        $rootScope.country = $localStorage.country;
+
+                        if ($rootScope.currentUser.Countries.length > 1) {
+                            $rootScope.availableCountries = countries;
+                        } else {
+                            $rootScope.availableCountries = false;
+                        }
+                        deferred.resolve();
+                    })
+                    .catch(function () {
+                        console.log(arguments);
+                        deferred.reject(arguments);
+                    });
+            }
 
             return deferred.promise;
         }
     })
 
 
-
-;
-
-if (!window.cordova) {
-    angular.module('cordovaHTTP', []);
-}
+//
 /*
+forge.rsa.setPrivateKey(
+  forge.util.decode64(keys.Vendor.Modulus),
+  forge.util.decode64(keys.Vendor.Exponent),
+  forge.util.decode64(keys.Vendor.D),
+  forge.util.decode64(keys.Vendor.P),
+  forge.util.decode64(keys.Vendor.Q),
+  forge.util.decode64(keys.Vendor.DP),
+  forge.util.decode64(keys.Vendor.DQ),
+  forge.util.decode64(keys.Vendor. InverseQ)
+).decrypt
 
-var data = r.data.map(function(d) {
- if (!decrypted)
-  throw new Error();
+var rsa = forge.rsa;
+var decode64 = forge.util.decode64;
+var bytesToHex = forge.util.bytesToHex;
+var BigInteger = forge.jsbn.BigInteger;
 
- var values = decrypted.split('|');
- console.log(values);
- return [parseFloat(values[1], 10), moment.unix(parseInt(values[2], 16))];
-});
+forge.rsa.setPrivateKey(
+ new BigInteger(bytesToHex(decode64(keys.Vendor.Modulus))),
+ new BigInteger(bytesToHex(decode64(keys.Vendor.Exponent))),
+ new BigInteger(bytesToHex(decode64(keys.Vendor.D))),
+ new BigInteger(bytesToHex(decode64(keys.Vendor.P))),
+ new BigInteger(bytesToHex(decode64(keys.Vendor.Q))),
+ new BigInteger(bytesToHex(decode64(keys.Vendor.DP))),
+ new BigInteger(bytesToHex(decode64(keys.Vendor.DQ))),
+  new BigInteger(bytesToHex(decode64(keys.Vendor.InverseQ)))
+)
+.decrypt(decode64('yaJKEKWBeZYOlyb5KK2qGqlhWbobq6tIhjpa0bj3qXcElNsoadak88THPoYBVP7gASg0tITEhQSPE55p4GpbQbZqcmmtfCrM0JFdlG3kjbeAqLeHO0QKaN0LOgiZkXY+T86gPdMkE8YHbdGSU+JT5+b8ru22wdNYTDFv5u1iZsQ='), 'RSA-OAEP')
 
-if (!since) {
- since = moment('2001-01-01')
-} else {
- since = moment(since);
-}
-
-var load = data
- .filter(function(d) {
-  return d[1] > since;
- })
- .reduce(function(a, b) {
-  // Sum first item
-  // Get largest of the second
-  return [a[0] + b[0], a[1] > b[1] ? a[1] : b[1]];
- }, [0, 0]);
-
- */
+*/
+;

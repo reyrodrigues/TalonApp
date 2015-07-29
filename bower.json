@@ -11,6 +11,8 @@
     "pouchdb": "~3.6.0",
     "angular-pouchdb": "~2.1.1",
     "pouchdb-find": "~0.3.5",
-    "pouchdb-upsert": "~1.1.1"
+    "pouchdb-upsert": "~1.1.1",
+    "jszip": "Stuk/jszip#~2.5.0",
+    "jszip-utils": "Stuk/jszip-utils#~0.0.2"
   }
 }
