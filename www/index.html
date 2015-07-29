@@ -36,6 +36,20 @@
     <script src="js/constants.js"></script>
     <script src="js/factories.js"></script>
     <script src="js/directives.js"></script>
+
+    <script type="text/javascript">
+       // System events
+       document.addEventListener("resume", resume, false);
+
+       function resume() {
+           var div = document.getElementsByTagName('body')[0];
+           var scope = angular.element(div).scope();
+           var rootScope = scope.$root;
+           rootScope.$apply(function () {
+               rootScope.$broadcast('onResumeCordova');
+           });
+       }
+    </script>
 </head>
 
 <body ng-app="talon" style="height:100%">
