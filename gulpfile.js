@@ -7,19 +7,36 @@ var minifyCss = require('gulp-minify-css');
 var rename = require('gulp-rename');
 var sh = require('shelljs');
 var uglify = require('gulp-uglify');
+var ngAnnotate = require('gulp-ng-annotate');
+var templateCache = require('gulp-angular-templatecache');
 
 var paths = {
     sass: ['./scss/**/*.scss'],
-    js: ['./js/**/*.js']
+    js: ['./js/**/*.js'],
+    js: ['./templates/**/*.html'],
 };
 
-gulp.task('default', ['sass', 'scripts', 'compress']);
 
-gulp.task('compress', function() {
-  return gulp.src('./build/*.js')
-    .pipe(uglify())
-    .pipe(gulp.dest('./www/js/'));
+gulp.task('templateCache', function () {
+    return gulp.src('templates/**/*.html')
+        .pipe(templateCache({
+            templateHeader: 'angular.module("talon.templates", []).run(["$templateCache", function($templateCache) {',
+            templateBody: '$templateCache.put("templates/<%= url %>","<%= contents %>");'
+        }))
+        .pipe(gulp.dest('www/js/'));
 });
+
+gulp.task('default', ['sass', 'scripts', 'templateCache', 'compress']);
+
+gulp.task('compress',['scripts'], function () {
+    return gulp.src('./build/*.js')
+        .pipe(ngAnnotate())
+        .pipe(uglify({
+         mangle: true
+        }))
+        .pipe(gulp.dest('./www/js/'));
+});
+
 
 gulp.task('sass', function (done) {
     gulp.src('./scss/ionic.app.scss')
@@ -45,7 +62,8 @@ gulp.task('scripts', function () {
 
 gulp.task('watch', function () {
     gulp.watch(paths.sass, ['sass']);
-    gulp.watch(paths.sass, ['js']);
+    gulp.watch(paths.js, ['default']);
+    gulp.watch(paths.html, ['default']);
 });
 
 gulp.task('install', ['git-check'], function () {

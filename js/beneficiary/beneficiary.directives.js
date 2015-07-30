@@ -1,4 +1,4 @@
-angular.module('talon.directives', [])
+angular.module('talon.beneficiary')
 
 .directive('ionSearch', function() {
         return {

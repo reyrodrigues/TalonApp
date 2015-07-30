@@ -1,9 +1,20 @@
+/* global window */
+
 // Ionic Starter App
 
 // angular.module is a global place for creating, registering and retrieving Angular modules
 // 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
 // the 2nd parameter is an array of 'requires'
-angular.module('talon', ['ionic', 'talon.services', 'talon.constants', 'talon.controllers', 'talon.factories', 'talon.directives'])
+angular.module('talon', ['ionic',
+    'talon.constants',
+    'talon.controllers',
+    'talon.templates',
+    'talon.auth',
+    'talon.beneficiary',
+    'talon.common',
+    'talon.nfc',
+    'talon.transaction'
+])
 
 .run(function ($ionicPlatform) {
     $ionicPlatform.ready(function () {
@@ -21,7 +32,6 @@ angular.module('talon', ['ionic', 'talon.services', 'talon.constants', 'talon.co
 
 .config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
     $httpProvider.interceptors.push('authInterceptor');
-    $httpProvider.interceptors.push('deviceIdIntereceptor');
 
 
     $stateProvider
@@ -59,14 +69,14 @@ angular.module('talon', ['ionic', 'talon.services', 'talon.constants', 'talon.co
                 }
             }
         })
-     .state('app.view-beneficiary', {
-         url: '/view-beneficiary/:id',
-         views: {
-             'menuContent': {
-                 templateUrl: 'templates/view-beneficiary.html'
-             }
-         }
-     })
+        .state('app.view-beneficiary', {
+            url: '/view-beneficiary/:id',
+            views: {
+                'menuContent': {
+                    templateUrl: 'templates/view-beneficiary.html'
+                }
+            }
+        })
 
     .state('app.receipts', {
         url: '/receipts',

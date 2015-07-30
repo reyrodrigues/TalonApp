@@ -1,38 +1,4 @@
-angular
-    .module('talon.factories', [
-        'ngStorage',
-        'ngCordova',
-        'talon.services'
-    ])
-
-.factory('deviceIdIntereceptor', ['$q', '$injector', '$cordovaDevice', '$localStorage', function AuthInterceptor($q, $injector, $cordovaDevice, $localStorage) {
-    // Adding the UUID to the requrests for authentication purposes
-    // Token auth should be used as well
-
-    var deviceIdIntereceptorFactory = {};
-
-    var _request = function (config) {
-
-        config.headers = config.headers || {};
-        var uuid = window.device ? $cordovaDevice.getUUID() : "UNKNOWN";
-
-        if (uuid) {
-            config.headers.DevideUUID = uuid;
-        }
-
-        return config;
-    };
-
-    var _responseError = function (rejection) {
-        return $q.reject(rejection);
-    };
-
-    deviceIdIntereceptorFactory.request = _request;
-    deviceIdIntereceptorFactory.responseError = _responseError;
-
-    return deviceIdIntereceptorFactory;
-}])
-
+angular.module('talon.auth')
 
 .factory('authInterceptor', ['$q', '$injector', '$location', '$localStorage', function AuthInterceptor($q, $injector, $location, $localStorage, $rootScope) {
 
@@ -80,4 +46,6 @@ angular
     authInterceptorServiceFactory.responseError = _responseError;
 
     return authInterceptorServiceFactory;
-}]);
+}])
+
+;
