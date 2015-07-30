@@ -121,14 +121,14 @@ angular.module('talon.controllers', [
         })
 
         function loadDeviceInfo() {
-
+/*
             $nfcTools.acr35GetDeviceStatus().then(function (status) {
                 $rootScope.device.batteryLevel = status[0];
                 $rootScope.device.sleepTimeout = status[1];
                 $nfcTools.acr35GetDeviceId().then(function (deviceId) {
                     $rootScope.device.deviceId = deviceId;
                 });
-            });
+            });*/
         }
 
         function showPinModal() {
@@ -166,10 +166,8 @@ angular.module('talon.controllers', [
         $scope.country = $rootScope.country;
         $scope.logout = logout;
         $scope.updateCountry = updateCountry;
-        $scope.checkDeviceStatus = function () {
-            $nfcTools.acr35GetDeviceStatus().then(function () {
-                $nfcTools.acr35GetDeviceId().then(function () {});
-            });
+        $scope.useNDEF = function () {
+         $localStorage.useNDEF = true ;
         }
 
         function updateCountry(country) {

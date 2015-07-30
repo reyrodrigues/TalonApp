@@ -27,7 +27,7 @@ angular.module('talon.transaction')
                     $settings.hashApplication().then(function (hash) {
                         var payload = '1933|' + value + '|' + info[1].toString(16);
                         $timeout(function () {
-                            beneficiaryData.updateCardData(payload, beneficiary.CardKey, pin).then(function (update) {
+                            beneficiaryData.updateCardData(payload, beneficiary.CardKey, pin,beneficiary.CardId).then(function (update) {
                                 processTransaction({
                                     beneficiary: beneficiary,
                                     amountCredited: amount,

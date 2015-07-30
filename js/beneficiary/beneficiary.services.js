@@ -17,8 +17,7 @@ angular.module('talon.beneficiary')
             var def = $q.defer();
 
             $ionicPlatform.ready(function () {
-                $nfcTools.acr35ReadIdFromTag().then(function (result) {
-                    var id = result[0];
+                $nfcTools.readId(pin).then(function (id) {
                     $http.post(talonRoot + 'api/App/MobileClient/ProvisionBeneficiary', {
                         'beneficiaryId': beneficiaryId,
                         'cardId': id
@@ -35,10 +34,9 @@ angular.module('talon.beneficiary')
 
                         $http.get(talonRoot + 'api/App/MobileClient/GenerateInitialLoad?beneficiaryId=' + key.BeneficiaryId).then(function (res) {
                             var payload = res.data;
-                            payload = forge.util.createBuffer(forge.util.decode64(payload), 'raw').toHex();
-                            $nfcTools.acr35WriteDataIntoTag(payload).then(function (result) {
-                                def.resolve();
-                            });
+                            payload = forge.util.bytesToHex(forge.util.decode64(payload));
+
+                            $nfcTools.writeData(payload, key.CardId).then(def.resolve.bind(def));
                         });
                     });
                 }).catch(function () {
@@ -109,7 +107,7 @@ angular.module('talon.beneficiary')
                     } else {
                         var payload = '1933|' + (load[0] + currentAmount) + '|' + load[1].unix().toString(16);
                         $timeout(function () {
-                            UpdateCardData(payload, beneficiary.CardKey, pin)
+                            UpdateCardData(payload, beneficiary.CardKey, pin, beneficiary.CardId)
                                 .then(function (update) {
                                     def.resolve();
                                 }).catch(failFunction);
@@ -123,13 +121,13 @@ angular.module('talon.beneficiary')
             return def.promise;
         }
 
-        function UpdateCardData(data, key, pin) {
+        function UpdateCardData(data, key, pin, id) {
             var encrypedB64 = encryption.encrypt(data, pin, key);
             var encrypted = forge.util.createBuffer(forge.util.decode64(encrypedB64), 'raw').toHex();
             var def = $q.defer();
 
 
-            $nfcTools.writeData(encrypted).then(function (result) {
+            $nfcTools.writeData(encrypted, id).then(function (result) {
                 def.resolve(result);
             });
 
@@ -142,7 +140,11 @@ angular.module('talon.beneficiary')
             if (firstIndex % 2 == 1)
                 firstIndex += 1;
 
-            var dataToZero = cardData.substring(0, firstIndex);
+
+            var dataToZero = firstIndex > -1 ? cardData.substring(0, firstIndex) : cardData;
+            console.log('Data');
+            console.log(dataToZero);
+
             var encryptedData = forge.util.hexToBytes(dataToZero);
             var decrypted = encryption.decrypt(encryptedData, pin, key);
 

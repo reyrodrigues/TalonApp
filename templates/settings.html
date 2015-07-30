@@ -42,7 +42,7 @@
             <ion-radio ng-repeat="c in availableCountries" ng-value="c.Id" ng-model="country.Id" ng-click="updateCountry(c)" ng-if="authorizationData.tokenType == 2">{{c.Name}}</ion-radio>
             <div class="item item-divider" ng-if="authorizationData.tokenType == 2"></div>
 
-            <a class="item " ng-click="checkDeviceStatus()">Check Device Status</a>
+            <a class="item " ng-click="useNDEF()">Use NDEF</a>
             <a class="item " ng-click="logout()">Logout </a>
         </ul>
     </ion-content>

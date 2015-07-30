@@ -21,11 +21,48 @@
     "cordova-plugin-device",
     "cordova-plugin-splashscreen",
     "com.ionic.keyboard",
+    {
+      "locator": "https://github.com/Paldom/SpinnerDialog.git",
+      "id": "hu.dpal.phonegap.plugins.SpinnerDialog"
+    },
+    "cordova-plugin-network-information",
     "cordova-plugin-console",
     "cordova-plugin-whitelist",
-    "cordova-plugin-file-transfer"
+    "org.apache.cordova.statusbar",
+    {
+      "locator": "https://github.com/litehelpers/Cordova-sqlcipher-adapter",
+      "id": "com.brodysoft.cordova.sqlcipher"
+    },
+    "cordova-plugin-file",
+    "cordova-plugin-file-transfer",
+    {
+      "locator": "https://github.com/EddyVerbruggen/Toast-PhoneGap-Plugin.git",
+      "id": "nl.x-services.plugins.toast"
+    },
+    "cordova-plugin-vibration",
+    {
+      "locator": "https://github.com/christocracy/cordova-plugin-background-geolocation.git",
+      "id": "org.transistorsoft.cordova.background-geolocation"
+    },
+    "cordova-plugin-geolocation",
+    "cordova-plugin-dialogs",
+    "com.chariotsolutions.nfc.plugin",
+    {
+      "locator": "../../plugin",
+      "id": "org.rescue.nfcCardPlugin"
+    }
   ],
   "cordovaPlatforms": [
-    "ios"
+    "ios",
+    {
+      "platform": "android",
+      "version": "",
+      "locator": "android"
+    },
+    {
+      "platform": "ios",
+      "version": "",
+      "locator": "ios"
+    }
   ]
 }

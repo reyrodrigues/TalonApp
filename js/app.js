@@ -16,7 +16,7 @@ angular.module('talon', ['ionic',
     'talon.transaction'
 ])
 
-.run(function ($ionicPlatform) {
+.run(function ($ionicPlatform, $rootScope, $timeout) {
     $ionicPlatform.ready(function () {
         // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
         // for form inputs)
@@ -25,6 +25,15 @@ angular.module('talon', ['ionic',
         }
         if (window.StatusBar) {
             StatusBar.styleLightContent();
+        }
+
+
+        if (window.nfc) {
+            window.nfc.addNdefListener(function (event) {
+                $timeout(function () {
+                    $rootScope.$broadcast('nfc:foundTag', event.tag);
+                });
+            });
         }
     });
 })
