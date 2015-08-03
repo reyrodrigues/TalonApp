@@ -1,7 +1,23 @@
 angular.module('talon.common', [
-        'ngStorage',
-        'ngCordova',
-        'talon.constants',
-        'pouchdb',
-    ])
-;
+    'ngStorage',
+    'ngCordova',
+    'talon.constants',
+    'pouchdb',
+]);
+
+if (DEBUG) {
+    if (!window.plugins) {
+        window.plugins = {};
+    }
+    if (!window.plugins.spinnerDialog) {
+        window.plugins.spinnerDialog = {
+            show: function () {
+                return true;
+            },
+            hide: function () {
+                return true;
+            },
+        };
+
+    }
+}

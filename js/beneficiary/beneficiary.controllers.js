@@ -27,7 +27,7 @@ angular.module('talon.beneficiary')
                 $cordovaSpinnerDialog.show('Read Card', 'Please hold NFC card close to reader', true);
                 beneficiaryData.readCardData(pin).then(function (info) {
                     $scope.cardInfo = info;
-                    
+
                     $cordovaSpinnerDialog.hide();
                 }).catch(failFunction);
             }).catch(failFunction);

@@ -20,6 +20,17 @@ angular.module('talon.common')
 
         return db;
     })
+    .service('qrCodeDB', function (pouchDB, pouchDBUtils) {
+        var db = pouchDB('qrCodeStore', {
+            adapter: 'websql'
+        });
+
+        pouchDBUtils.index(db, 'BeneficiaryId');
+        pouchDBUtils.index(db, 'VoucherCode');
+        pouchDBUtils.updatePouchDB(db);
+
+        return db;
+    })
     .service('cardLoadHistoryDB', function (pouchDB, pouchDBUtils) {
         var db = pouchDB('cardLoadHistoryStore', {
             adapter: 'websql'

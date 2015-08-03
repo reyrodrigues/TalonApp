@@ -10,10 +10,13 @@ angular.module('talon.controllers', [
         'talon.transaction',
         'ngCordova'
     ])
-    .controller('AppController', function AppController($scope, beneficiaryData, $timeout, $rootScope, $cordovaGeolocation,
-        $ionicPlatform, $nfcTools, $localStorage, $ionicModal, $q, $cordovaSpinnerDialog, adminAuthentication, $nfcTools) {
+    .controller('AppController', function AppController($scope, beneficiaryData, $timeout, $rootScope,
+        $cordovaGeolocation, $ionicPlatform, $nfcTools, $localStorage, $ionicModal, $q,
+        $cordovaSpinnerDialog, adminAuthentication, $nfcTools, $settings, $interval) {
         $scope.pin = $scope.$new();
         $scope.login = $scope.$new();
+        $scope.confirmation = $scope.$new();
+        $scope.signature = $scope.$new();
         $rootScope.device = {};
 
         $ionicModal.fromTemplateUrl('templates/login.html', {
@@ -25,14 +28,25 @@ angular.module('talon.controllers', [
             $scope.login.modal = modal;
         });
 
+        $ionicModal.fromTemplateUrl('templates/confirmation.html', {
+            scope: $scope.confirmation,
+            backdropClickToClose: false
+        }).then(function (modal) {
+            $scope.confirmation.modal = modal;
+        });
+
         $ionicModal.fromTemplateUrl('templates/pin-code.html', {
             scope: $scope.pin
         }).then(function (modal) {
             $scope.pin.modal = modal;
         });
 
-        $ionicPlatform.ready(loadDeviceInfo);
-        $rootScope.$on('onResumeCordova', loadDeviceInfo);
+        $ionicModal.fromTemplateUrl('templates/signature-pad.html', {
+            scope: $scope.signature
+        }).then(function (modal) {
+            $scope.signature.modal = modal;
+            $scope.signature.isOpen = false;
+        });
 
 
         if (!$localStorage.authorizationData) {
@@ -47,63 +61,11 @@ angular.module('talon.controllers', [
                 adminAuthentication.loadUserData();
             }
         }
-        $scope.readIdIso = function () {
-            if (window.nfcTools) {
-                window.nfcTools.isoDepReadIdFromTag(function () {
-                    console.log('success');
-                }, function () {
-                    console.log('Error');
-                })
-            }
-        };
 
-        $scope.setupVendor = function () {
-            beneficiaryData.loadKeys().then(function (keys) {
-                beneficiaryData.loadCardLoads().then(function (cardLoad) {
 
-                });
-            });
-        };
-        $scope.provisionCard = function () {
-            var beneficiaryId = prompt('beneficiaryId');
 
-            beneficiaryData.provisionBeneficiary(beneficiaryId).then(function () {});
-        };
-
-        $scope.loadCard = function () {
-            showPinModal().then(function (pin) {
-                beneficiaryData.fetchBeneficiary().then(function (beneficiary) {
-                    beneficiaryData.fetchCardLoad(beneficiary.BeneficiaryId, beneficiary.CardKey, pin).then(function (data) {
-                        if (data) {
-                            var payload = '1933|' + data[0] + '|' + data[1].toString(16);
-                            $timeout(function () {
-                                beneficiaryData.updateCard(payload, beneficiary.CardKey, pin).then(function (update) {});
-                            }, 1000);
-                        }
-                    })
-                });
-            });
-        };
-
-        $scope.readCard = function () {
-            var afterTimeout = function (argument) {
-                $cordovaSpinnerDialog.hide();
-            };
-
-            showPinModal().then(function (pin) {
-                $cordovaSpinnerDialog.show('Read Card', 'Please hold NFC card close to reader', true);
-                beneficiaryData.fetchBeneficiary().then(function (beneficiary) {
-                    beneficiaryData.readCard(beneficiary.CardKey, pin).then(function (info) {
-                        $scope.cardInfo = info;
-
-                        $cordovaSpinnerDialog.hide();
-                    }).catch(afterTimeout);
-                }).catch(afterTimeout);
-            }).catch(afterTimeout);
-        };
-
-        $scope.showPinModal = showPinModal;
-        $scope.showLoginModal = showLoginModal;
+        $ionicPlatform.ready(loadDeviceInfo);
+        $rootScope.$on('onResumeCordova', loadDeviceInfo);
 
         $ionicPlatform.ready(function () {
             var posOptions = {
@@ -114,21 +76,29 @@ angular.module('talon.controllers', [
                 .getCurrentPosition(posOptions)
                 .then(function (position) {
                     $rootScope.currentLocation = position.coords;
-                }, function (err) {
-                    // error
-                });
+                }, function (err) {});
+        });
 
-        })
+        $scope.showPinModal = showPinModal;
+        $scope.showLoginModal = showLoginModal;
+        $scope.showConfirmationModal = showConfirmationModal;
+        $scope.showSignaturePad = showSignaturePad;
+
+        $interval(function () {
+         $settings.sync();
+
+        }, 12e4);
 
         function loadDeviceInfo() {
-/*
-            $nfcTools.acr35GetDeviceStatus().then(function (status) {
-                $rootScope.device.batteryLevel = status[0];
-                $rootScope.device.sleepTimeout = status[1];
-                $nfcTools.acr35GetDeviceId().then(function (deviceId) {
-                    $rootScope.device.deviceId = deviceId;
-                });
-            });*/
+
+            /*
+                        $nfcTools.acr35GetDeviceStatus().then(function (status) {
+                            $rootScope.device.batteryLevel = status[0];
+                            $rootScope.device.sleepTimeout = status[1];
+                            $nfcTools.acr35GetDeviceId().then(function (deviceId) {
+                                $rootScope.device.deviceId = deviceId;
+                            });
+                        });*/
         }
 
         function showPinModal() {
@@ -139,6 +109,34 @@ angular.module('talon.controllers', [
                 $scope.pin.modal.show();
 
             return $scope.pin.deferred.promise;
+        }
+
+        function showConfirmationModal(data, pin) {
+            $scope.confirmation.deferred = $q.defer();
+            $scope.confirmation.data = data;
+            $scope.confirmation.pin = pin;
+
+            if ($scope.confirmation.modal) {
+                $scope.confirmation.modal.show();
+
+            }
+
+            return $scope.confirmation.deferred.promise;
+        }
+
+        function showSignaturePad() {
+            $scope.signature.deferred = $q.defer();
+
+            if (window.screen && screen.lockOrientation) {
+                screen.lockOrientation('landscape');
+            }
+
+            if ($scope.signature.modal) {
+                $scope.signature.modal.show();
+                $scope.signature.isOpen = true;
+            }
+
+            return $scope.signature.deferred.promise;
         }
 
         function showLoginModal() {
@@ -167,12 +165,11 @@ angular.module('talon.controllers', [
         $scope.logout = logout;
         $scope.updateCountry = updateCountry;
         $scope.useNDEF = function () {
-         $localStorage.useNDEF = true ;
+            $localStorage.useNDEF = true;
         }
 
         function updateCountry(country) {
             $localStorage.country = country;
-            console.log(country);
         }
 
         function logout() {

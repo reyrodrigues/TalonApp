@@ -72,41 +72,22 @@ angular.module('talon.nfc')
             // Provider specific version
             acr35WriteDataIntoTag: function (data) {
                 console.log('acr35WriteDataIntoTag');
-                if (_useNDEF) {
-                    return $q.when(true);
-                }
                 return makePromise(window.nfcTools.acr35WriteDataIntoTag, [data], true);
             },
             acr35ReadDataFromTag: function () {
                 console.log('acr35ReadDataFromTag');
-                if (_useNDEF) {
-                    return $q.when(true);
-                }
-
                 return makePromise(window.nfcTools.acr35ReadDataFromTag, [], true);
             },
             acr35ReadIdFromTag: function () {
                 console.log('acr35ReadIdFromTag');
-                if (_useNDEF) {
-                    return $q.when(true);
-                }
-
                 return makePromise(window.nfcTools.acr35ReadIdFromTag, [], true);
             },
             acr35GetDeviceStatus: function () {
                 console.log('acr35GetDeviceStatus');
-                if (_useNDEF) {
-                    return $q.when(true);
-                }
-
                 return makePromise(window.nfcTools.acr35GetDeviceStatus, [], true);
             },
             acr35GetDeviceId: function () {
                 console.log('acr35GetDeviceId');
-                if (_useNDEF) {
-                    return $q.when(true);
-                }
-
                 return makePromise(window.nfcTools.acr35GetDeviceId, [], true);
             }
         };
@@ -117,15 +98,36 @@ angular.module('talon.nfc')
 
         // Reads all the data and the ID from the card
         function readIdAndData() {
-            var _useNDEF = $localStorage.useNDEF || false;
-
             var def = $q.defer();
+
+            if (DEBUG) {
+                if (!window.cordova) {
+                    def.resolve(UseMock());
+                    return def.promise;
+                }
+
+                function UseMock() {
+                    if (!$localStorage.mockCard) {
+                        return {
+                            id: forge.util.bytesToHex(forge.random.getBytes(16)),
+                            data: '',
+                            atr: null
+                        };
+                    } else {
+                        return {
+                            id: $localStorage.mockCard[1],
+                            data: $localStorage.mockCard[0],
+                            atr: null
+                        };
+                    }
+                }
+            }
 
             var platform = $cordovaDevice.getPlatform();
             if (platform.toLowerCase() == 'ios') {
                 return UseACR35();
             } else if (platform.toLowerCase() == 'android') {
-                if (window.nfc && _useNDEF) {
+                if (window.nfc) {
                     window.nfc.enabled(function () {
                         def.resolve(UseNDEF());
                     }, function () {
@@ -141,13 +143,10 @@ angular.module('talon.nfc')
             }
 
             function UseNDEF() {
-                console.log('Using NDEF');
                 var ndef = $q.defer();
 
                 var handler = $rootScope.$on('nfc:foundTag', function (e, tag) {
                     handler();
-                    console.log('Found a tag');
-                    console.log(tag);
                     var messages = (tag.ndefMessage || []).map(function (m) {
                         m.id = nfc.bytesToString(m.id);
                         m.type = nfc.bytesToString(m.type);
@@ -158,13 +157,13 @@ angular.module('talon.nfc')
 
                     if (!messages.length) {
                         ndef.resolve({
-                            id: forge.util.bytesToHex(forge.random.getBytes(4)),
+                            id: forge.util.bytesToHex(forge.random.getBytes(16)),
                             data: '',
                             atr: null
                         });
                     } else {
                         ndef.resolve({
-                            id: messages[0].id,
+                            id: messages[0].id || forge.util.bytesToHex(forge.random.getBytes(16)),
                             data: messages[0].payload
                         });
                     }
@@ -174,7 +173,6 @@ angular.module('talon.nfc')
             }
 
             function UseACR35() {
-                console.log('Using ACR35');
                 return nfcTools.acr35ReadIdFromTag().then(function (id) {
                     return nfcTools.acr35ReadDataFromTag().then(function (data) {
                         id = id.constructor === Array ? id[0] : id;
@@ -191,15 +189,26 @@ angular.module('talon.nfc')
 
         // Read just the Id
         function readId() {
-            var _useNDEF = $localStorage.useNDEF || false;
-
             var def = $q.defer();
+
+            if (DEBUG) {
+                if (!window.cordova) {
+                    def.resolve(UseMock());
+                    return def.promise;
+                }
+
+                function UseMock() {
+                    return readIdAndData().then(function (tag) {
+                        return tag.id
+                    });
+                }
+            }
 
             var platform = $cordovaDevice.getPlatform();
             if (platform.toLowerCase() == 'ios') {
                 return UseACR35();
             } else if (platform.toLowerCase() == 'android') {
-                if (window.nfc && _useNDEF) {
+                if (window.nfc) {
                     window.nfc.enabled(function () {
                         def.resolve(UseNDEF());
                     }, function () {
@@ -210,37 +219,20 @@ angular.module('talon.nfc')
                 }
                 return def.promise;
             } else if (platform.toLowerCase().indexOf('win') > -1 || platform.toLowerCase().indexOf('wp') > -1) {
+                def.resolve(null);
                 return def.promise;
-
             }
 
             function UseNDEF() {
-                console.log('Using NDEF');
-                var ndef = $q.defer();
-
-                var handler = $rootScope.$on('nfc:foundTag', function (e, tag) {
-                    handler();
-                    console.log('Found a tag');
-                    var messages = (tag.ndefMessage || []).map(function (m) {
-                        m.id = nfc.bytesToString(m.id);
-                        m.type = nfc.bytesToString(m.type);
-                        m.payload = nfc.bytesToString(m.payload);
-                        return m;
-                    });
-
-                    console.log(JSON.stringify(messages));
-                    if (!messages.length) {
-                        ndef.resolve(forge.util.bytesToHex(forge.random.getBytes(16)));
-                    } else {
-                        return ndef.resolve(messages[0].id);
-                    }
+                return readIdAndData().then(function (tag) {
+                    return tag.id
                 });
-                return ndef.promise;
             }
 
             function UseACR35() {
-                console.log('Using ACR35');
                 return nfcTools.acr35ReadIdFromTag().then(function (id) {
+                    id = id.constructor === Array ? id[0] : id;
+
                     return id;
                 });
             }
@@ -249,22 +241,32 @@ angular.module('talon.nfc')
 
         // Write data into card
         function writeData(dataHex, id) {
-            var _useNDEF = $localStorage.useNDEF || false;
-
             var def = $q.defer();
+
+            if (DEBUG) {
+                if (!window.cordova) {
+                    def.resolve(UseMock(dataHex, id));
+                    return def.promise;
+                }
+
+                function UseMock(data, id) {
+                    $localStorage.mockCard = [data, id]
+                    return true;
+                }
+            }
 
             var platform = $cordovaDevice.getPlatform();
             if (platform.toLowerCase() == 'ios') {
                 return UseACR35(dataHex);
             } else if (platform.toLowerCase() == 'android') {
-                if (window.nfc && _useNDEF) {
+                if (window.nfc) {
                     window.nfc.enabled(function () {
                         def.resolve(UseNDEF(dataHex, id));
                     }, function () {
-                        def.resolve(UseACR35(dataHex));
+                        def.resolve(UseACR35(dataHex, id));
                     });
                 } else {
-                    def.resolve(UseACR35(dataHex));
+                    def.resolve(UseACR35(dataHex, id));
                 }
                 return def.promise;
             } else if (platform.toLowerCase().indexOf('win') > -1 || platform.toLowerCase().indexOf('wp') > -1) {
@@ -273,13 +275,10 @@ angular.module('talon.nfc')
             }
 
             function UseNDEF(data, id) {
-                console.log('Using NDEF');
                 var defn = $q.defer();
 
                 var handler = $rootScope.$on('nfc:foundTag', function (e, tag) {
                     handler();
-                    console.log('Writing a tag');
-                    console.log(JSON.stringify(tag));
                     var message = [
                         window.ndef.record(window.ndef.TNF_EXTERNAL_TYPE,
                             util.stringToBytes('application/talon'),
@@ -297,11 +296,9 @@ angular.module('talon.nfc')
                 return defn.promise;
             }
 
-            function UseACR35(data) {
-                console.log('Using ACR35');
+            function UseACR35(data, id) {
                 return nfcTools.acr35WriteDataIntoTag(data);
             }
-
         }
     });
 

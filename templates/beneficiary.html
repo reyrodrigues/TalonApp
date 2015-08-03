@@ -1,9 +1,9 @@
 <ion-view view-title="Beneficiary" ng-controller="BeneficiaryController">
     <ion-content>
         <ul class="list">
-            <div class="item item-divider" ng-if="authorizationData.tokenType == 2">Administration</div>
+            <div class="item item-divider">Administration</div>
 
-            <a class="item " ui-sref="app.list-beneficiaries" ng-if="authorizationData.tokenType == 2">Beneficiary Information</a>
+            <a class="item " ui-sref="app.list-beneficiaries">Beneficiary Information</a>
 
             <div class="item item-divider">Card Loads</div>
             <a class="item " ng-click="reloadCard()">Reload Card</a>

@@ -49,18 +49,44 @@ angular.module('talon.transaction')
         };
 
         $scope.process = function () {
-            var afterTimeout = function (argument) {
-             console.log(argument);
+            var afterTimeout = function (error) {
+                console.log(error);
+
                 $cordovaSpinnerDialog.hide();
                 $scope.clear();
             };
 
+            var invalidCardOrPin = function (argument) {
+                alert('Invalid PIN.');
+                $cordovaSpinnerDialog.hide();
+            };
+            var noCredits = function (argument) {
+                alert('Not enough credit');
+                $cordovaSpinnerDialog.hide();
+            };
+
+            if (!$scope.value) {
+                alert('There is no value to be charged.');
+                return;
+            }
+
             $scope.showPinModal().then(function (pin) {
                 $cordovaSpinnerDialog.show('Read Card', 'Please hold NFC card close to reader', true);
-                transactionData.debitCard(parseFloat($scope.value, 10), pin).then(function () {
-                    $cordovaSpinnerDialog.hide();
+                var amountToBeCharged = parseFloat($scope.value, 10);
+                transactionData.loadCurrentData(pin).then(function (data) {
                     $scope.clear();
-                }).catch(afterTimeout);
+                    $cordovaSpinnerDialog.hide();
+
+                    $scope.showConfirmationModal({
+                        card: data,
+                        value: amountToBeCharged
+                    }, pin).then(function () {
+                        $cordovaSpinnerDialog.show('Read Card', 'Please hold NFC card close to reader', true);
+                        transactionData.debitCard(data, amountToBeCharged, pin).then(function () {
+                            $cordovaSpinnerDialog.hide();
+                        }).catch(noCredits);
+                    })
+                }).catch(invalidCardOrPin);
             }).catch(afterTimeout);
         };
 
@@ -68,5 +94,32 @@ angular.module('talon.transaction')
             $scope.number = $scope.value;
         }
     })
+    .controller('ConfirmationController', function PinController($scope, $location, $timeout) {
+        $scope.$watch('data', function () {
+            if ($scope.data) {
+                $scope.total = $scope.data.card.current[0] +
+                    $scope.data.card.pending[0] -
+                    $scope.data.value;
+
+                console.log($scope.total);
+            }
+        })
+        $scope.cancel = function () {
+            delete $scope.data;
+            delete $scope.pin;
+
+            $scope.modal.hide();
+            $scope.deferred.reject();
+        }
+        $scope.pay = function () {
+            delete $scope.data;
+            delete $scope.pin;
+
+            $scope.modal.hide();
+            $scope.deferred.resolve();
+        }
+    })
+
+
 
 ;

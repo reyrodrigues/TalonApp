@@ -26,6 +26,9 @@ angular.module('talon', ['ionic',
         if (window.StatusBar) {
             StatusBar.styleLightContent();
         }
+        if (window.screen && window.screen.lockOrientation) {
+            screen.lockOrientation('portrait');
+        }
 
 
         if (window.nfc) {
@@ -34,7 +37,21 @@ angular.module('talon', ['ionic',
                     $rootScope.$broadcast('nfc:foundTag', event.tag);
                 });
             });
+
+            window.nfc.addNdefFormatableListener(function (e, tag) {
+                console.log('Formatable found');
+                var message = [
+                    window.ndef.record(window.ndef.TNF_EXTERNAL_TYPE,
+                        util.stringToBytes('application/talon'),
+                        util.stringToBytes(forge.util.bytesToHex(forge.random.getBytes(16))),
+                        util.stringToBytes('')
+                    )
+                ];
+
+                window.nfc.write(message);
+            });
         }
+
     });
 })
 

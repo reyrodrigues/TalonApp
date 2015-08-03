@@ -1,5 +1,6 @@
 <ion-side-menus enable-menu-with-back-views="false">
-  <ion-side-menu-content class="post-size-14px">
+  <ion-side-menu-content class="post-size-14px" edge-drag-threshold="false"
+  drag-content="false">
     <ion-nav-bar class="bar bar-dark">
       <ion-nav-back-button>
       </ion-nav-back-button>
@@ -18,7 +19,7 @@
           <i class="icon ion-calculator"></i>
           <h2 class="menu-text">POS Mode</h2>
         </ion-item>
-        <ion-item class="item-icon-left" nav-clear menu-close ui-sref="app.beneficiary">
+        <ion-item class="item-icon-left" nav-clear menu-close ui-sref="app.beneficiary" ng-if="authorizationData.tokenType == 2">
           <i class="icon ion-person"></i>
           <h2 class="menu-text">Beneficiary</h2>
         </ion-item>

@@ -13,7 +13,7 @@ var templateCache = require('gulp-angular-templatecache');
 var paths = {
     sass: ['./scss/**/*.scss'],
     js: ['./js/**/*.js'],
-    js: ['./templates/**/*.html'],
+    html: ['./templates/**/*.html'],
 };
 
 
@@ -27,12 +27,49 @@ gulp.task('templateCache', function () {
 });
 
 gulp.task('default', ['sass', 'scripts', 'templateCache', 'compress']);
+gulp.task('debug', ['sass', 'scripts', 'templateCache', 'dev']);
 
-gulp.task('compress',['scripts'], function () {
+gulp.task('compress', ['scripts'], function () {
     return gulp.src('./build/*.js')
         .pipe(ngAnnotate())
         .pipe(uglify({
-         mangle: true
+            mangle: true,
+            compress: {
+                drop_console: true,
+                global_defs: {
+                    DEBUG: false
+                }
+            }
+        }))
+        .pipe(gulp.dest('./www/js/'));
+});
+
+gulp.task('dev', ['scripts'], function () {
+    return gulp.src('./build/*.js')
+        .pipe(ngAnnotate())
+        .pipe(uglify({
+            mangle: false,
+            output: {
+                indent_start: 0, // start indentation on every line (only when `beautify`)
+                indent_level: 4, // indentation level (only when `beautify`)
+                quote_keys: false, // quote all keys in object literals?
+                space_colon: true, // add a space after colon signs?
+                ascii_only: false, // output ASCII-safe? (encodes Unicode characters as ASCII)
+                inline_script: false, // escape "</script"?
+                width: 160, // informative maximum line width (for beautified output)
+                max_line_len: 32000, // maximum line length (for non-beautified output)
+                beautify: true, // beautify output?
+                source_map: null, // output a source map
+                bracketize: false, // use brackets every time?
+                comments: false, // output comments?
+                semicolons: true, // use semicolons to separate statements? (otherwise, newlines)
+            },
+            compress: {
+                drop_console: false,
+                global_defs: {
+                    DEBUG: true
+                }
+            }
         }))
         .pipe(gulp.dest('./www/js/'));
 });
@@ -62,8 +99,8 @@ gulp.task('scripts', function () {
 
 gulp.task('watch', function () {
     gulp.watch(paths.sass, ['sass']);
-    gulp.watch(paths.js, ['default']);
-    gulp.watch(paths.html, ['default']);
+    gulp.watch(paths.js, ['dev']);
+    gulp.watch(paths.html, ['dev']);
 });
 
 gulp.task('install', ['git-check'], function () {

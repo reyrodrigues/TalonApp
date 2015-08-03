@@ -10,38 +10,37 @@ angular.module('talon.beneficiary')
             updateCardData: UpdateCardData,
             provisionBeneficiary: ProvisionBeneficiary,
             listBeneficiariesByName: ListBeneficiariesByName,
-            fetchBeneficiaryById: FetchBeneficiaryById
+            fetchBeneficiaryById: FetchBeneficiaryById,
+            fetchPendingLoads: FetchPendingLoads
         };
 
         function ProvisionBeneficiary(beneficiaryId, pin) {
             var def = $q.defer();
 
-            $ionicPlatform.ready(function () {
-                $nfcTools.readId(pin).then(function (id) {
-                    $http.post(talonRoot + 'api/App/MobileClient/ProvisionBeneficiary', {
-                        'beneficiaryId': beneficiaryId,
-                        'cardId': id
-                    }).then(function (k) {
-                        var key = k.data;
+            $nfcTools.readId(pin).then(function (id) {
+                $http.post(talonRoot + 'api/App/MobileClient/ProvisionBeneficiary', {
+                    'beneficiaryId': beneficiaryId,
+                    'cardId': id
+                }).then(function (k) {
+                    var key = k.data;
 
-                        keyDB.upsert(key._id, function (d) {
-                            return {
-                                BeneficiaryId: key.BeneficiaryId,
-                                CardId: key.CardId,
-                                CardKey: key.CardKey
-                            };
-                        });
-
-                        $http.get(talonRoot + 'api/App/MobileClient/GenerateInitialLoad?beneficiaryId=' + key.BeneficiaryId).then(function (res) {
-                            var payload = res.data;
-                            payload = forge.util.bytesToHex(forge.util.decode64(payload));
-
-                            $nfcTools.writeData(payload, key.CardId).then(def.resolve.bind(def));
-                        });
+                    keyDB.upsert(key._id, function (d) {
+                        return {
+                            BeneficiaryId: key.BeneficiaryId,
+                            CardId: key.CardId,
+                            CardKey: key.CardKey
+                        };
                     });
-                }).catch(function () {
-                    def.reject();
+
+                    $http.get(talonRoot + 'api/App/MobileClient/GenerateInitialLoad?beneficiaryId=' + key.BeneficiaryId).then(function (res) {
+                        var payload = res.data;
+                        payload = forge.util.bytesToHex(forge.util.decode64(payload));
+
+                        $nfcTools.writeData(payload, key.CardId).then(def.resolve.bind(def));
+                    });
                 });
+            }).catch(function () {
+                def.reject();
             });
 
             return def.promise
@@ -67,8 +66,40 @@ angular.module('talon.beneficiary')
                 console.log(error);
                 def.reject(error);
             };
+            FetchPendingLoads(pin).then(function (pendingLoad) {
+                var load = pendingLoad.pending
+                var cardPayload = pendingLoad.card.payload;
+                var beneficiary = pendingLoad.card.beneficiary;
+                var currentAmount = cardPayload[0];
+                if (load[0] == 0) {
+                    def.resolve();
+                    return;
+                }
 
-            ReadCardData(pin).then(function (card) {
+                var payload = '1933|' + (load[0] + currentAmount) + '|' + load[1].unix().toString(16);
+                $timeout(function () {
+                    UpdateCardData(payload, beneficiary.CardKey, pin, beneficiary.CardId)
+                        .then(function (update) {
+                            def.resolve();
+                        }).catch(failFunction);
+                }, 500);
+            }).catch(failFunction);
+
+            return def.promise;
+        }
+
+        function FetchPendingLoads(pin, cardLoad) {
+            var def = $q.defer();
+            var failFunction = function (error) {
+                console.log(error);
+                def.reject(error);
+            };
+
+            var preloadDef = $q.defer();
+            if (cardLoad) preloadDef.resolve(cardLoad);
+            else ReadCardData(pin).then(preloadDef.resolve.bind(preloadDef));
+
+            preloadDef.promise.then(function (card) {
                 var cardPayload = card.payload;
                 var beneficiary = card.beneficiary;
                 var since = moment.unix(cardPayload[1]);
@@ -79,6 +110,13 @@ angular.module('talon.beneficiary')
                         CardId: beneficiary.CardId
                     }
                 }).then(function (res) {
+                    if (res.docs.length == 0) {
+                        def.resolve({
+                            pending: [0, 0],
+                            card: card
+                        });
+                    }
+
                     var loads = res.docs[0].Load;
 
                     var data = loads.map(function (d) {
@@ -102,19 +140,16 @@ angular.module('talon.beneficiary')
                         }, [0, 0]);
                     if (load[0] == 0 && load[1] == 0) {
                         // No loads
-                        console.log('No loads for this card');
-                        def.resolve();
+                        def.resolve({
+                            pending: [0, 0],
+                            card: card
+                        });
                     } else {
-                        var payload = '1933|' + (load[0] + currentAmount) + '|' + load[1].unix().toString(16);
-                        $timeout(function () {
-                            UpdateCardData(payload, beneficiary.CardKey, pin, beneficiary.CardId)
-                                .then(function (update) {
-                                    def.resolve();
-                                }).catch(failFunction);
-                        }, 500);
+                        def.resolve({
+                            pending: load,
+                            card: card
+                        });
                     }
-
-
                 }).catch(failFunction);
             }).catch(failFunction);
 
@@ -142,8 +177,6 @@ angular.module('talon.beneficiary')
 
 
             var dataToZero = firstIndex > -1 ? cardData.substring(0, firstIndex) : cardData;
-            console.log('Data');
-            console.log(dataToZero);
 
             var encryptedData = forge.util.hexToBytes(dataToZero);
             var decrypted = encryption.decrypt(encryptedData, pin, key);

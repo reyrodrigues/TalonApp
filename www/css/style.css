@@ -87,24 +87,24 @@
     margin-bottom: 5px;
     font-size: 200%;
 }
-
 .icon-bigger {
-  font-size: 200%;
+    font-size: 200%;
 }
-
 .padding-top > div {
- padding-top: 1em;
+    padding-top: 1em;
 }
-
-
 .search-wrapper-light {
-    border-bottom: 2px solid rgba(255,255,255,0.5);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.5);
     background: none;
     border-radius: 0;
     margin-left: 5px;
     margin-right: 5px;
 }
-
 .search-wrapper-light input, .search-wrapper-light input::-webkit-input-placeholder {
     color: #ffffff;
+}
+
+.signature-pad-content {
+    width: 100%;
+    height: 100%;
 }

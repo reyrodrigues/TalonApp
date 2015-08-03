@@ -1,6 +1,6 @@
 /*global forge*/
 angular.module('talon.settings')
-    .service('$settings', function ($timeout, $q, $cordovaFile, httpUtils, keyDB, cardLoadDB, $localStorage,
+    .service('$settings', function ($timeout, $q, $cordovaFile, httpUtils, keyDB, cardLoadDB, qrCodeDB, $localStorage,
         $http, $ionicPlatform, talonRoot) {
         return {
             hashApplication: hashApplication,
@@ -8,6 +8,10 @@ angular.module('talon.settings')
         };
 
         function hashApplication() {
+            if (DEBUG) {
+                return $q.when({});
+            }
+
             var applicationDir = cordova.file.applicationDirectory;
             var logError = function (error) {
                 console.log(error);
@@ -36,17 +40,14 @@ angular.module('talon.settings')
         function Sync() {
             var def = $q.defer();
             httpUtils.checkConnectivity().then(function () {
-                LoadKeys().then(function () {
-                    LoadCardLoads().then(function () {
-                        $http.get(talonRoot + 'api/App/MobileClient/DownloadKeyset')
-                            .then(function (keyset) {
-                                $localStorage.keyset = keyset.data;
-                                def.resolve();
+                $q.all([$http.get(talonRoot + 'api/App/MobileClient/DownloadKeyset'), LoadKeys(), LoadQRCodes(), LoadCardLoads()])
+                    .then(function (promises) {
+                        var keyset = promises[0];
+                        $localStorage.keyset = keyset.data;
+                        def.resolve();
 
-                            })
-                            .catch(def.resolve.bind(def));
-                    });
-                });
+                    })
+                    .catch(def.resolve.bind(def));
             }).catch(function () {
                 LoadPayloadFromNetwork().then(def.resolve.bind(def));
             })
@@ -99,9 +100,37 @@ angular.module('talon.settings')
             }));
         }
 
+        // QR Load
+        function LoadQRCodes() {
+            console.log('Internet');
+            return $http.get(talonRoot + 'api/App/MobileClient/GenerateQRCodes')
+                .then(function (r) {
+                    return LoadQRCodesInternal(r.data);
+                });
+        }
+
+        function LoadQRCodesInternal(data) {
+            return $q.all(data.map(function (load) {
+                return qrCodeDB.upsert(load._id, function (d) {
+                    return {
+                        VoucherCode: load.VoucherCode,
+                        BeneficiaryId: load.BeneficiaryId,
+                        Payload: load.Payload
+                    };
+                }).then(function () {
+                    return load;
+                });
+            }));
+        }
+
 
         function LoadPayloadFromNetwork() {
             var def = $q.defer();
+            if (DEBUG) {
+                if (!window.cordova) {
+                    def.resolve();
+                }
+            }
 
             $ionicPlatform.ready(function () {
                 var uri = encodeURI("http://10.10.10.254/data/UsbDisk1/Volume1/Talon/" + $localStorage.country.IsoAlpha3 + ".zip");
@@ -115,29 +144,32 @@ angular.module('talon.settings')
                 $cordovaFile.createFile(localDirUri, 'load.zip', true).then(function (fileEntry) {
                     $cordovaFileTransfer.download(uri, fileEntry.toURL())
                         .then(function (entry) {
-                            $cordovaFile.readAsArrayBuffer(localDirUri, 'load.zip').then(function (file) {
-                                var zip = new JSZip(file);
-                                var cardLoads = decryptRsaData(zip.file("CardLoads.b64").asText());
-                                var beneficiaryKeys = decryptRsaData(zip.file("BeneficiaryKeys.b64").asText());
+                            $cordovaFile.readAsArrayBuffer(localDirUri, 'load.zip')
+                                .then(function (file) {
+                                    var zip = new JSZip(file);
+                                    var qrCodes = decryptRsaData(zip.file("QRCodes.b64").asText());
+                                    var cardLoads = decryptRsaData(zip.file("CardLoads.b64").asText());
+                                    var beneficiaryKeys = decryptRsaData(zip.file("BeneficiaryKeys.b64").asText());
+                                    $q.all([
+                                            LoadCardLoadsInternal(JSON.parse(cardLoads)),
+                                            LoadQRCodesInternal(JSON.parse(qrCodes)),
+                                            LoadKeysInternal(JSON.parse(beneficiaryKeys))
+                                        ])
+                                        .then(function () {
+                                            $cordovaFile.removeFile(localDirUri, 'load.zip').then(function () {
+                                                console.log('Loaded from wifi storage');
 
-                                LoadCardLoadsInternal(JSON.parse(cardLoads)).then(function () {
-                                    LoadKeysInternal(JSON.parse(beneficiaryKeys)).then(function () {
-                                        $cordovaFile.removeFile(localDirUri, 'load.zip').then(function () {
-                                            console.log('Loaded from wifi storage');
-
-                                            def.resolve();
-                                        }).catch(logError)
-                                    }).catch(logError);
+                                                def.resolve();
+                                            });
+                                        }).catch(logError);
                                 }).catch(logError);
-                            }).catch(logError);
-                        }).catch(logError);
-                }).catch(logError)
-            });
+                        }).catch(logError)
+                });
 
+            });
 
             return def.promise;
         }
-
     });
 
 ;
