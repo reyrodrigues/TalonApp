@@ -1,4 +1,4 @@
-<ion-view class="pos-screen pos" ng-controller="POSController" view-title="Talon POS" ng-init="clear()">
+<ion-view class="pos-screen pos" ng-controller="POSController" view-title="POS Mode">
     <ion-content scroll="false">
         <div style="height: 10%; line-height: 50px; padding-right: 1em; font-size:200%; background-color: #666;">
             <span style="display:block; width:80% float: left; text-align: right; color: white;">{{value}}</span>
@@ -9,7 +9,7 @@
                     <button class="button button-assertive button-stretch pos-button" ng-click="clear()">C</button>
                 </div>
                 <div class="col">
-                    <button class="button button-positive button-stretch icon ion-qr-scanner" ng-click="showSignaturePad()"></button>
+                    <button class="button button-positive button-stretch icon ion-qr-scanner" ng-click="processQR()"></button>
                 </div>
                 <div class="col">
                     <button class="button button-positive button-stretch icon ion-card" ng-click="process()"></button>

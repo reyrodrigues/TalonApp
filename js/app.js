@@ -16,7 +16,11 @@ angular.module('talon', ['ionic',
     'talon.transaction'
 ])
 
-.run(function ($ionicPlatform, $rootScope, $timeout) {
+.run(function ($ionicPlatform, $rootScope, $timeout, $localStorage) {
+    $rootScope.currentUser = $localStorage.currentUser;
+    $rootScope.organization = $localStorage.currentUser.Organization;
+    $rootScope.country = $localStorage.country;
+
     $ionicPlatform.ready(function () {
         // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
         // for form inputs)
@@ -82,27 +86,19 @@ angular.module('talon', ['ionic',
         url: '/beneficiary',
         views: {
             'menuContent': {
-                templateUrl: 'templates/beneficiary.html'
+                templateUrl: 'templates/list-beneficiaries.html'
             }
         }
     })
 
-    .state('app.list-beneficiaries', {
-            url: '/list-beneficiaries',
-            views: {
-                'menuContent': {
-                    templateUrl: 'templates/list-beneficiaries.html'
-                }
+    .state('app.view-beneficiary', {
+        url: '/view-beneficiary/:id',
+        views: {
+            'menuContent': {
+                templateUrl: 'templates/view-beneficiary.html'
             }
-        })
-        .state('app.view-beneficiary', {
-            url: '/view-beneficiary/:id',
-            views: {
-                'menuContent': {
-                    templateUrl: 'templates/view-beneficiary.html'
-                }
-            }
-        })
+        }
+    })
 
     .state('app.receipts', {
         url: '/receipts',

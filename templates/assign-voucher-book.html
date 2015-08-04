@@ -1,0 +1,16 @@
+<ion-view view-title="Talon">   <ion-header-bar class="bar bar-positive">
+       <h1 class="title">Assign Voucher Book</h1>
+   </ion-header-bar>
+  <ion-content>
+   <div class="item item-divider">Distribution</div>
+   <ion-radio ng-repeat="c in distributions" ng-value="c.id" ng-model="selectedDistributionId" ng-click="updateDistribution(c)">{{c.name}}</ion-radio>
+   <div class="row">
+       <div class="col col-33">
+           <button class="button button-assertive button-block" ng-click="cancel()">Cancel</button>
+       </div>
+       <div class="col col-67">
+           <button class="button button-positive button-block" ng-click="scan()">Scan first page</button>
+       </div>
+   </div>
+  </ion-content>
+</ion-view>

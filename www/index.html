@@ -11,7 +11,8 @@
     <!-- compiled css output -->
     <link href="css/ionic.app.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
-
+        <script>
+            window.DEBUG = false;</script>
     <!-- ionic/angularjs js -->
     <script src="lib/ionic/js/ionic.bundle.js"></script>
 
@@ -38,17 +39,22 @@
     <script src="js/app.js"></script>
 
     <script type="text/javascript">
-       // System events
-       document.addEventListener("resume", resume, false);
+        if (window.cordova) {
+            window.alert = function(text, callback) {
+                return navigator.notification.alert(text, callback, 'Talon');
+            }
+        }
+        // System events
+        document.addEventListener("resume", resume, false);
 
-       function resume() {
-           var div = document.getElementsByTagName('body')[0];
-           var scope = angular.element(div).scope();
-           var rootScope = scope.$root;
-           rootScope.$apply(function () {
-               rootScope.$broadcast('onResumeCordova');
-           });
-       }
+        function resume() {
+            var div = document.getElementsByTagName('body')[0];
+            var scope = angular.element(div).scope();
+            var rootScope = scope.$root;
+            rootScope.$apply(function() {
+                rootScope.$broadcast('onResumeCordova');
+            });
+        }
     </script>
 </head>
 

@@ -1,5 +1,5 @@
 angular.module('talon.beneficiary')
-    .service('beneficiaryData', function beneficiaryData($http, $localStorage, keyDB, cardLoadDB, $q, talonRoot,
+    .service('beneficiaryData', function beneficiaryData($http, $localStorage, keyDB, cardLoadDB, $q, talonRoot, qrCodeDB,
         $nfcTools, $ionicPlatform, $timeout, $cordovaFile, $cordovaFileTransfer, httpUtils, encryption, $state) {
 
 
@@ -7,17 +7,66 @@ angular.module('talon.beneficiary')
         return {
             reloadCard: ReloadCard,
             readCardData: ReadCardData,
+            readRawCardData: ReadRawCardData,
             updateCardData: UpdateCardData,
             provisionBeneficiary: ProvisionBeneficiary,
             listBeneficiariesByName: ListBeneficiariesByName,
             fetchBeneficiaryById: FetchBeneficiaryById,
-            fetchPendingLoads: FetchPendingLoads
+            fetchPendingLoads: FetchPendingLoads,
+            validateQRCode: validateQRCode,
+            setPin: SetPin,
+            listDistributions: ListDistributions,
+            assignVoucherBook: AssignVoucherBook
         };
 
-        function ProvisionBeneficiary(beneficiaryId, pin) {
+
+        function validateQRCode(code, pin) {
+            return qrCodeDB.find({
+                selector: {
+                    VoucherCode: code
+                }
+            }).then(function (res) {
+                var docs = res.docs;
+                if (docs.length == 0) {
+                    throw new Error('Invalid voucher.');
+                }
+                var voucher = docs[0];
+                return keyDB.find({
+                    selector: {
+                        BeneficiaryId: voucher.BeneficiaryId
+                    }
+                }).then(function (res) {
+                    if (res.docs.length == 0) {
+                        throw new Error('Beneficiary not registered');
+                    }
+
+                    var beneficiary = res.docs[0];
+                    var encryptedData = forge.util.decode64(voucher.Payload);
+                    var decryptedString = encryption.decrypt(encryptedData, pin, beneficiary.CardKey);
+
+                    if (!decryptedString) {
+                        throw new Error('Invalid pin.');
+                    }
+
+                    var voucherValues = decryptedString.split('|');
+                    var value = parseFloat(voucherValues[1], 10);
+                    var validAfter = parseInt(voucherValues[2], 16);
+                    var voucherCode = voucherValues[3];
+
+                    return {
+                        value: value,
+                        validAfter: validAfter,
+                        voucherCode: voucherCode,
+                        beneficiary: beneficiary
+                    }
+                })
+            });
+        }
+
+        function ProvisionBeneficiary(beneficiaryId) {
             var def = $q.defer();
 
-            $nfcTools.readId(pin).then(function (id) {
+            $nfcTools.readId().then(function (id) {
                 $http.post(talonRoot + 'api/App/MobileClient/ProvisionBeneficiary', {
                     'beneficiaryId': beneficiaryId,
                     'cardId': id
@@ -46,8 +95,65 @@ angular.module('talon.beneficiary')
             return def.promise
         }
 
-        function ReadCardData(pin) {
-            return $nfcTools.readIdAndData().then(function (cardData) {
+        function SetPin(beneficiaryId, pin) {
+            return $http.post(talonRoot + 'api/App/MobileClient/SetBeneficiaryPin', {
+                'beneficiaryId': beneficiaryId,
+                'pin': pin
+            }).then(function (k) {
+
+            });
+        }
+
+        function AssignVoucherBook(beneficiaryId, distributionId, serialNumber) {
+            return $http.post(talonRoot + 'api/App/MobileClient/AssignVoucherBook', {
+                'beneficiaryId': beneficiaryId,
+                'distributionId': distributionId,
+                'serialNumber': serialNumber
+            }).then(function (k) {
+            });
+        }
+
+        function ListDistributions(beneficiaryId) {
+            return $http.get(talonRoot + 'api/App/MobileClient/ListDistributionsForBeneficiary?beneficiaryId=' + beneficiaryId).then(function (res) {
+                return res.data;
+            });
+        }
+
+        function ReadRawCardData() {
+            var def = $q.defer();
+            var resolved = false;
+            var timeout = $timeout(function () {
+                if (!resolved) {
+                    resolved = true;
+                    def.reject();
+                }
+            }, 15e3);
+
+            $nfcTools.readIdAndData().then(function (cardData) {
+                if (!resolved) {
+                    $timeout.cancel(timeout);
+
+                    def.resolve(cardData);
+                    resolved = true;
+                }
+            });
+
+            return def.promise;
+        }
+
+        function ReadCardData(pin, data) {
+            var dataPromise = null;
+
+            if (data) {
+                dataPromise = $q.when(data);
+            } else {
+                dataPromise = $q.when(ReadRawCardData());
+            }
+            console.log('Acquiring data');
+
+            return dataPromise.then(function (cardData) {
+                console.log('ed data');
+                console.log(cardData);
                 return FetchBeneficiary(cardData.id).then(function (beneficiary) {
                     return DecryptCardData(cardData.data, beneficiary.CardKey, pin).then(function (payload) {
                         return {

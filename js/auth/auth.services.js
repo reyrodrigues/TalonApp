@@ -147,11 +147,7 @@ angular.module('talon.auth')
             var deferred = $q.defer();
             if ($localStorage.currentUser) {
                 $rootScope.currentUser = $localStorage.currentUser;
-
-                if (!$localStorage.country) {
-                    $localStorage.country = $rootScope.currentUser.Country;
-                }
-
+                $localStorage.country = $rootScope.currentUser.Country;
                 $rootScope.country = $localStorage.country;
 
                 deferred.resolve();

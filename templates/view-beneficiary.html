@@ -9,11 +9,14 @@
         <div class="row">
             <strong>Location:</strong> &nbsp; {{ beneficiary.Location.Name }}
         </div>
+        <button class="button button-block button-positive" ng-click="setPin()">
+            Set Pin
+        </button>
         <button class="button button-block button-positive" ng-click="provisionCard()">
             Provision Card
         </button>
-        <button class="button button-block button-positive">
-            View Transaction History
+        <button class="button button-block button-positive" ng-click="assignVoucherBook()">
+            Assign Voucher Book
         </button>
     </ion-content>
 </ion-view>

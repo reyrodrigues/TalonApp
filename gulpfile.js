@@ -31,11 +31,10 @@ gulp.task('debug', ['sass', 'scripts', 'templateCache', 'dev']);
 
 gulp.task('compress', ['scripts'], function () {
     return gulp.src('./build/*.js')
-        .pipe(ngAnnotate())
         .pipe(uglify({
             mangle: true,
             compress: {
-                drop_console: true,
+                drop_console: !true,
                 global_defs: {
                     DEBUG: false
                 }
@@ -44,7 +43,7 @@ gulp.task('compress', ['scripts'], function () {
         .pipe(gulp.dest('./www/js/'));
 });
 
-gulp.task('dev', ['scripts'], function () {
+gulp.task('dev', ['scripts', 'templateCache'], function () {
     return gulp.src('./build/*.js')
         .pipe(ngAnnotate())
         .pipe(uglify({
@@ -94,6 +93,7 @@ gulp.task('sass', function (done) {
 gulp.task('scripts', function () {
     return gulp.src('./js/**/*.js')
         .pipe(concat('app.js'))
+        .pipe(ngAnnotate())
         .pipe(gulp.dest('./build/'));
 });
 

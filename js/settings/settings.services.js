@@ -1,7 +1,7 @@
-/*global forge*/
+/*global forge, moment */
 angular.module('talon.settings')
     .service('$settings', function ($timeout, $q, $cordovaFile, httpUtils, keyDB, cardLoadDB, qrCodeDB, $localStorage,
-        $http, $ionicPlatform, talonRoot) {
+        $http, $ionicPlatform, talonRoot, $rootScope, $cordovaNetwork) {
         return {
             hashApplication: hashApplication,
             sync: Sync
@@ -38,21 +38,35 @@ angular.module('talon.settings')
 
 
         function Sync() {
+            var successFunction = function () {
+                $rootScope.lastSynced = moment().locale('en-US').format('L');
+                return true;
+            }
+
             var def = $q.defer();
-            httpUtils.checkConnectivity().then(function () {
-                $q.all([$http.get(talonRoot + 'api/App/MobileClient/DownloadKeyset'), LoadKeys(), LoadQRCodes(), LoadCardLoads()])
-                    .then(function (promises) {
-                        var keyset = promises[0];
-                        $localStorage.keyset = keyset.data;
-                        def.resolve();
+            var isOnline = true;
+            if (DEBUG) {
+                isOnline = true;
+            } else {
+                isOnline = $cordovaNetwork.isOnline();
+            }
 
-                    })
-                    .catch(def.resolve.bind(def));
-            }).catch(function () {
-                LoadPayloadFromNetwork().then(def.resolve.bind(def));
-            })
+            $q.when(isOnline)
+                .then(httpUtils.checkConnectivity())
+                .then(function () {
+                    $q.all([$http.get(talonRoot + 'api/App/MobileClient/DownloadKeyset'), LoadKeys(), LoadQRCodes(), LoadCardLoads()])
+                        .then(function (promises) {
+                            var keyset = promises[0];
+                            $localStorage.keyset = keyset.data;
+                            successFunction();
+                            def.resolve();
+                        })
+                        .catch(def.resolve.bind(def));
+                }).catch(function () {
+                    LoadPayloadFromNetwork().then(successFunction).then(def.resolve.bind(def));
+                })
 
-            def.promise
+            return def.promise;
         }
 
         // Key Data

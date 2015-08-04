@@ -3,21 +3,23 @@
 angular.module('talon.transaction')
     .service('transactionData', function beneficiaryData($http, $localStorage, $q, talonRoot,
         $timeout, $cordovaFile, $cordovaFileTransfer, $settings, transactionHistoryDB, $rootScope,
-        beneficiaryData, httpUtils) {
+        beneficiaryData, httpUtils, qrCodeDB) {
 
         return {
             processTransaction: processTransaction,
             loadCurrentData: loadCurrentData,
-            debitCard: debitCard
+            debitCard: debitCard,
+            debitQRCodes: debitQRCodes
         };
 
-        function loadCurrentData(pin) {
+
+        function loadCurrentData(pin, data) {
             var failFunction = function (error) {
                 console.log(error);
                 throw error;
             };
 
-            return beneficiaryData.readCardData(pin).then(function (card) {
+            return beneficiaryData.readCardData(pin, data).then(function (card) {
                 return beneficiaryData.fetchPendingLoads(pin, card).then(function (load) {
                     var beneficiary = card.beneficiary;
                     var currentPayload = card.payload;
@@ -35,6 +37,7 @@ angular.module('talon.transaction')
         function debitCard(info, amount, pin) {
             var def = $q.defer();
             var failFunction = function (error) {
+                alert(error.message);
                 def.reject([-2, error]);
             };
 
@@ -46,53 +49,97 @@ angular.module('talon.transaction')
             var time = pendingPayload[0] > 0 ? pendingPayload[1].unix() : currentPayload[1];
 
 
-            if (value >= 0 && amount > 0) {
-                value = Math.round(value * 1000) / 1000;
-                $settings.hashApplication().then(function (hash) {
-                    var payload = '1933|' + value + '|' + time.toString(16);
-                    if ($localStorage.authorizationData.tokenType == 2) {
-                        alert('You are logged in as an administrator. The POS mode is available for demo use only. The transaction will not be completed.')
-                        def.resolve();
-                        return;
-                    }
-                    $timeout(function () {
-                        beneficiaryData.updateCardData(payload, beneficiary.CardKey, pin, beneficiary.CardId).then(function (update) {
-                            processTransaction({
-                                beneficiary: beneficiary,
-                                amountCredited: amount,
-                                amountRemaining: value,
-                                date: moment().unix(),
-                                checksum: hash
-                            }).then(function () {
-                                def.resolve();
-                            });
-                        });
-                    }, 500);
-                });
-            } else {
-                def.reject([-1, 'Not enough credit.']);
-            }
+            value = Math.round(value * 1000) / 1000;
+            $settings.hashApplication().then(function (hash) {
+                var payload = '1933|' + value + '|' + time.toString(16);
+                 if ($localStorage.authorizationData.tokenType == 2) {
+                      alert('You are logged in as an administrator. The POS mode is available for demo use only. The transaction will not be completed.')
+                      def.resolve();
+                      return;
+                  }
+
+                $timeout(function () {
+                    beneficiaryData.updateCardData(payload, beneficiary.CardKey, pin, beneficiary.CardId).then(function (update) {
+                        processTransaction({
+                            type: 2,
+                            beneficiaryId: beneficiary.BeneficiaryId,
+                            amountCredited: amount,
+                            amountRemaining: value,
+                            date: moment().unix(),
+                            checksum: hash
+                        }).then(function () {
+                            def.resolve();
+                        }).catch(failFunction);
+                    }).catch(failFunction);
+                }, 500);
+            }).catch(failFunction);
+
+            return def.promise
+        }
+
+
+
+        function debitQRCodes(vouchers, beneficiary) {
+            var def = $q.defer();
+            var failFunction = function (error) {
+                console.log('Failed!!!!');
+                def.resolve();
+            };
+
+            $settings.hashApplication().then(function (hash) {
+                if ($localStorage.authorizationData.tokenType == 2) {
+                    alert('You are logged in as an administrator. The POS mode is available for demo use only. The transaction will not be completed.')
+                    def.resolve();
+                    return;
+                }
+
+                var promises = vouchers.map(function (v) {
+                    return processTransaction({
+                        type: 3,
+                        beneficiaryId: beneficiary.BeneficiaryId,
+                        voucherCode: v,
+                        date: moment().unix(),
+                        checksum: hash
+                    });
+                })
+
+                $q.when(promises).then(function (results) {
+                    console.log(results);
+
+                    console.log('Transaction Processed!!!')
+                    def.resolve();
+                }).catch(failFunction);
+            }).catch(failFunction);
 
             return def.promise
         }
 
         function processTransaction(transaction) {
             var def = $q.defer();
-            console.log('Writing transaction record in db');
-            transaction._id = transaction.beneficiary.BeneficiaryId + '-' + transaction.date;
+            transaction._id = transaction.beneficiaryId + '-' + transaction.date;
             transaction.transactionCode = forge.util.bytesToHex(forge.random.getBytes(8));
             transaction.location = $rootScope.currentLocation;
-            transactionHistoryDB.put(transaction);
-            console.log(transaction);
+            transaction.quarantine = false;
 
             httpUtils.checkConnectivity().then(function () {
                 console.log('Process Transaction Online');
-                $http.post(talonRoot + 'api/App/MobileClient/ProcessNFCTransaction', transaction).then(function () {
+                var url = transaction.type == 2 ? 'ProcessNFCTransaction' : 'ProcessQRTransaction'
+                $http.post(talonRoot + 'api/App/MobileClient/' + url, transaction).then(function (response) {
+                    if (response.data) {
+                        response = response.data;
+                    }
+                    if (!response.Success) {
+                        def.reject(response.message);
+                        return;
+                    }
+
+                    transaction.confirmationCode = response.ConfirmationCode;
+                    transactionHistoryDB.put(transaction);
                     def.resolve();
                 })
             }).catch(function () {
-                console.log('Process Transaction Offline');
-
+                transaction.quarantine = true;
+                transactionHistoryDB.put(transaction);
                 def.resolve();
             });
             return def.promise

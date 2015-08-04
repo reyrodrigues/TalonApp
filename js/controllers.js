@@ -16,6 +16,7 @@ angular.module('talon.controllers', [
         $scope.pin = $scope.$new();
         $scope.login = $scope.$new();
         $scope.confirmation = $scope.$new();
+        $scope.qrConfirmation = $scope.$new();
         $scope.signature = $scope.$new();
         $rootScope.device = {};
 
@@ -33,6 +34,13 @@ angular.module('talon.controllers', [
             backdropClickToClose: false
         }).then(function (modal) {
             $scope.confirmation.modal = modal;
+        });
+
+        $ionicModal.fromTemplateUrl('templates/qr-confirmation.html', {
+            scope: $scope.qrConfirmation,
+            backdropClickToClose: false
+        }).then(function (modal) {
+            $scope.qrConfirmation.modal = modal;
         });
 
         $ionicModal.fromTemplateUrl('templates/pin-code.html', {
@@ -66,6 +74,11 @@ angular.module('talon.controllers', [
 
         $ionicPlatform.ready(loadDeviceInfo);
         $rootScope.$on('onResumeCordova', loadDeviceInfo);
+        $ionicPlatform.on('resume', function () {
+            $rootScope.currentUser = $localStorage.currentUser;
+            $rootScope.organization = $localStorage.currentUser.Organization;
+            $rootScope.country = $localStorage.country;
+        });
 
         $ionicPlatform.ready(function () {
             var posOptions = {
@@ -83,9 +96,10 @@ angular.module('talon.controllers', [
         $scope.showLoginModal = showLoginModal;
         $scope.showConfirmationModal = showConfirmationModal;
         $scope.showSignaturePad = showSignaturePad;
+        $scope.showQRConfirmationModal = showQRConfirmationModal;
 
         $interval(function () {
-         $settings.sync();
+            $settings.sync();
 
         }, 12e4);
 
@@ -100,6 +114,7 @@ angular.module('talon.controllers', [
                             });
                         });*/
         }
+
 
         function showPinModal() {
             $scope.pin.deferred = $q.defer();
@@ -122,6 +137,19 @@ angular.module('talon.controllers', [
             }
 
             return $scope.confirmation.deferred.promise;
+        }
+
+        function showQRConfirmationModal(voucher, pin) {
+            $scope.qrConfirmation.deferred = $q.defer();
+            $scope.qrConfirmation.vouchers = [voucher];
+            $scope.qrConfirmation.pin = pin;
+
+            if ($scope.qrConfirmation.modal) {
+                $scope.qrConfirmation.modal.show();
+
+            }
+
+            return $scope.qrConfirmation.deferred.promise;
         }
 
         function showSignaturePad() {
@@ -158,23 +186,6 @@ angular.module('talon.controllers', [
                 $scope.login.modal.show();
 
             return $scope.login.deferred.promise;
-        }
-    })
-    .controller('SettingsController', function SettingsController($scope, $localStorage, $rootScope, $nfcTools) {
-        $scope.country = $rootScope.country;
-        $scope.logout = logout;
-        $scope.updateCountry = updateCountry;
-        $scope.useNDEF = function () {
-            $localStorage.useNDEF = true;
-        }
-
-        function updateCountry(country) {
-            $localStorage.country = country;
-        }
-
-        function logout() {
-            delete $localStorage.authorizationData;
-            $scope.showLoginModal();
         }
     })
 
