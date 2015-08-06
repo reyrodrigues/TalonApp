@@ -1,7 +1,8 @@
 /*global forge, moment */
 angular.module('talon.settings')
-    .service('$settings', function ($timeout, $q, $cordovaFile, httpUtils, keyDB, cardLoadDB, qrCodeDB, $localStorage,
-        $http, $ionicPlatform, talonRoot, $rootScope, $cordovaNetwork) {
+    .service('$settings', function ($timeout, $q, $cordovaFile, httpUtils, $localStorage,
+        $http, $ionicPlatform, talonRoot, $rootScope, $cordovaNetwork, $cordovaDevice,
+        keyDB, cardLoadDB, qrCodeDB, cardLoadHistoryDB, transactionHistoryDB, encryption) {
         return {
             hashApplication: hashApplication,
             sync: Sync
@@ -32,6 +33,14 @@ angular.module('talon.settings')
                 }).catch(function (error) {
                     logError(error);
                     return "";
+                }),
+                'templates.js': $cordovaFile.readAsDataURL(applicationDir + "www/js/", 'templates.js').then(function (templates) {
+                    var md = forge.md.md5.create();
+                    md.update(templates);
+                    return md.digest().toHex()
+                }).catch(function (error) {
+                    logError(error);
+                    return "";
                 })
             });
         }
@@ -39,7 +48,7 @@ angular.module('talon.settings')
 
         function Sync() {
             var successFunction = function () {
-                $rootScope.lastSynced = moment().locale('en-US').format('L');
+                $rootScope.lastSynced = moment().locale('en-US').format('LL');
                 return true;
             }
 
@@ -79,17 +88,7 @@ angular.module('talon.settings')
         }
 
         function LoadKeysInternal(data) {
-            return $q.all(data.map(function (key) {
-                return keyDB.upsert(key._id, function (d) {
-                    return {
-                        BeneficiaryId: key.BeneficiaryId,
-                        CardId: key.CardId,
-                        CardKey: key.CardKey
-                    };
-                }).then(function () {
-                    return key;
-                });
-            }));
+            return keyDB.replace(data);
         }
 
         // Card Load
@@ -102,16 +101,7 @@ angular.module('talon.settings')
         }
 
         function LoadCardLoadsInternal(data) {
-            return $q.all(data.map(function (load) {
-                return cardLoadDB.upsert(load._id, function (d) {
-                    return {
-                        CardId: load.CardId,
-                        Load: load.Load
-                    };
-                }).then(function () {
-                    return load;
-                });
-            }));
+            return cardLoadDB.replace(data);
         }
 
         // QR Load
@@ -124,17 +114,7 @@ angular.module('talon.settings')
         }
 
         function LoadQRCodesInternal(data) {
-            return $q.all(data.map(function (load) {
-                return qrCodeDB.upsert(load._id, function (d) {
-                    return {
-                        VoucherCode: load.VoucherCode,
-                        BeneficiaryId: load.BeneficiaryId,
-                        Payload: load.Payload
-                    };
-                }).then(function () {
-                    return load;
-                });
-            }));
+            return qrCodeDB.replace(data);
         }
 
 
@@ -145,9 +125,11 @@ angular.module('talon.settings')
                     def.resolve();
                 }
             }
+            var uuid = $cordovaDevice.getUUID();
 
             $ionicPlatform.ready(function () {
                 var uri = encodeURI("http://10.10.10.254/data/UsbDisk1/Volume1/Talon/" + $localStorage.country.IsoAlpha3 + ".zip");
+                var uploadURI = encodeURI("http://10.10.10.254/data/UsbDisk1/Volume1/Talon/" + uuid + ".zip");
 
                 var localDirUri = cordova.file.tempDirectory || cordova.file.cacheDirectory;
                 var logError = function (error) {
@@ -155,15 +137,16 @@ angular.module('talon.settings')
                     def.reject();
                 }
 
+
                 $cordovaFile.createFile(localDirUri, 'load.zip', true).then(function (fileEntry) {
                     $cordovaFileTransfer.download(uri, fileEntry.toURL())
                         .then(function (entry) {
                             $cordovaFile.readAsArrayBuffer(localDirUri, 'load.zip')
                                 .then(function (file) {
                                     var zip = new JSZip(file);
-                                    var qrCodes = decryptRsaData(zip.file("QRCodes.b64").asText());
-                                    var cardLoads = decryptRsaData(zip.file("CardLoads.b64").asText());
-                                    var beneficiaryKeys = decryptRsaData(zip.file("BeneficiaryKeys.b64").asText());
+                                    var qrCodes = encryption.decryptRsaData(zip.file("QRCodes.b64").asText());
+                                    var cardLoads = encryption.decryptRsaData(zip.file("CardLoads.b64").asText());
+                                    var beneficiaryKeys = encryption.decryptRsaData(zip.file("BeneficiaryKeys.b64").asText());
                                     $q.all([
                                             LoadCardLoadsInternal(JSON.parse(cardLoads)),
                                             LoadQRCodesInternal(JSON.parse(qrCodes)),

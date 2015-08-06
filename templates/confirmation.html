@@ -24,9 +24,6 @@
             <div class="col col-33">
                 <button class="button button-assertive button-block" ng-click="cancel()">Cancel</button>
             </div>
-            <div class="col col-67" ng-if="total < 0">
-                <button class="button button-assertive button-block" ng-click="pay()">Process transaction</button>
-            </div>
             <div class="col col-67" ng-if="total >= 0">
                 <button class="button button-positive button-block" ng-click="pay()">Pay with card</button>
             </div>

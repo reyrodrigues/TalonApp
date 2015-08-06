@@ -21,26 +21,25 @@ angular.module('talon.beneficiary')
 
 
         function validateQRCode(code, pin) {
-            return qrCodeDB.find({
-                selector: {
-                    VoucherCode: code
+            return qrCodeDB.find(
+                function (o) {
+                    return o.VoucherCode == code;
                 }
-            }).then(function (res) {
-                var docs = res.docs;
+            ).then(function (res) {
+                var docs = res;
                 if (docs.length == 0) {
                     throw new Error('Invalid voucher.');
                 }
                 var voucher = docs[0];
-                return keyDB.find({
-                    selector: {
-                        BeneficiaryId: voucher.BeneficiaryId
-                    }
-                }).then(function (res) {
-                    if (res.docs.length == 0) {
+                return keyDB.find(
+                    function (o) {
+                        return o.BeneficiaryId == voucher.BeneficiaryId;
+                    }).then(function (res) {
+                    if (res.length == 0) {
                         throw new Error('Beneficiary not registered');
                     }
 
-                    var beneficiary = res.docs[0];
+                    var beneficiary = res[0];
                     var encryptedData = forge.util.decode64(voucher.Payload);
                     var decryptedString = encryption.decrypt(encryptedData, pin, beneficiary.CardKey);
 
@@ -73,13 +72,8 @@ angular.module('talon.beneficiary')
                 }).then(function (k) {
                     var key = k.data;
 
-                    keyDB.upsert(key._id, function (d) {
-                        return {
-                            BeneficiaryId: key.BeneficiaryId,
-                            CardId: key.CardId,
-                            CardKey: key.CardKey
-                        };
-                    });
+
+                    keyDB.upsert(key._id, key);
 
                     $http.get(talonRoot + 'api/App/MobileClient/GenerateInitialLoad?beneficiaryId=' + key.BeneficiaryId).then(function (res) {
                         var payload = res.data;
@@ -109,8 +103,7 @@ angular.module('talon.beneficiary')
                 'beneficiaryId': beneficiaryId,
                 'distributionId': distributionId,
                 'serialNumber': serialNumber
-            }).then(function (k) {
-            });
+            }).then(function (k) {});
         }
 
         function ListDistributions(beneficiaryId) {
@@ -155,7 +148,11 @@ angular.module('talon.beneficiary')
                 console.log('ed data');
                 console.log(cardData);
                 return FetchBeneficiary(cardData.id).then(function (beneficiary) {
+                    console.log('beneficiary');
+                    console.log(cardData.data, beneficiary.CardKey, pin);
                     return DecryptCardData(cardData.data, beneficiary.CardKey, pin).then(function (payload) {
+                        console.log('decrypted');
+
                         return {
                             beneficiary: beneficiary,
                             payload: payload
@@ -211,19 +208,17 @@ angular.module('talon.beneficiary')
                 var since = moment.unix(cardPayload[1]);
                 var currentAmount = cardPayload[0];
 
-                cardLoadDB.find({
-                    selector: {
-                        CardId: beneficiary.CardId
-                    }
+                cardLoadDB.find(function (o) {
+                    return o.CardId == beneficiary.CardId
                 }).then(function (res) {
-                    if (res.docs.length == 0) {
+                    if (res.length == 0) {
                         def.resolve({
                             pending: [0, 0],
                             card: card
                         });
                     }
 
-                    var loads = res.docs[0].Load;
+                    var loads = res[0].Load;
 
                     var data = loads.map(function (d) {
                         var encryptedData = forge.util.decode64(d);
@@ -304,13 +299,13 @@ angular.module('talon.beneficiary')
         function FetchBeneficiary(id) {
             var def = $q.defer();
 
-            keyDB.find({
-                selector: {
-                    CardId: id
+            keyDB.find(
+                function (o) {
+                    return o.CardId == id;
                 }
-            }).then(function (s) {
-                if (s.docs.length) {
-                    def.resolve(s.docs[0]);
+            ).then(function (s) {
+                if (s.length) {
+                    def.resolve(s[0]);
                 }
                 def.reject();
             });

@@ -57,7 +57,7 @@ angular.module('talon.beneficiary')
 
     })
     .controller('ViewBeneficiaryController', function ViewBeneficiaryController($scope, $localStorage, $q, $timeout, $http, $state,
-        talonRoot, beneficiaryData, $cordovaSpinnerDialog, $ionicModal, $cordovaBarcodeScanner) {
+        talonRoot, beneficiaryData, $cordovaSpinnerDialog, $ionicModal) {
         $scope.voucherBook = $scope.$new();
 
         beneficiaryData.fetchBeneficiaryById($state.params.id).then(function (beneficiaries) {
@@ -69,17 +69,20 @@ angular.module('talon.beneficiary')
                 };
 
                 if (window.cordova && window.cordova.plugins && window.cordova.plugins.barcodeScanner) {
-                    $cordovaBarcodeScanner.scan().then(function (result) {
-                        var code = result.text;
-                        if (result.cancelled) {
-                            console.log(result.cancelled);
-                            return;
-                        }
+                    cordova.plugins.barcodeScanner.scan(function win(result) {
+                        $timeout(function () {
+                            var code = result.text;
+                            if (result.cancelled) {
+                                console.log(result.cancelled);
+                                return;
+                            }
 
-                        beneficiaryData.assignVoucherBook($scope.beneficiary.Id, $scope.voucherBook.selectedDistributionId, code).then(function () {
-                            $scope.voucherBook.modal.hide();
-                        }).catch(failFunction);
-                    });
+                            beneficiaryData.assignVoucherBook($scope.beneficiary.Id, $scope.voucherBook.selectedDistributionId, code).then(function () {
+                                $scope.voucherBook.modal.hide();
+                            }).catch(failFunction);
+
+                        })
+                    }, failFunction);
                 } else {
                     if (DEBUG) {
                         console.log('DEBUGGING');
@@ -112,6 +115,7 @@ angular.module('talon.beneficiary')
                     }).catch(failFunction);
                 }).catch(failFunction);
             };
+
 
             $scope.provisionCard = function () {
                 var failFunction = function (error) {

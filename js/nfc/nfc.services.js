@@ -241,6 +241,9 @@ angular.module('talon.nfc')
 
         // Write data into card
         function writeData(dataHex, id) {
+         console.log('Writing data');
+         console.log(dataHex);
+         
             var def = $q.defer();
 
             if (DEBUG) {

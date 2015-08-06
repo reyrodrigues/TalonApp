@@ -17,9 +17,12 @@ angular.module('talon', ['ionic',
 ])
 
 .run(function ($ionicPlatform, $rootScope, $timeout, $localStorage) {
-    $rootScope.currentUser = $localStorage.currentUser;
-    $rootScope.organization = $localStorage.currentUser.Organization;
-    $rootScope.country = $localStorage.country;
+    if ($localStorage.currentUser) {
+
+        $rootScope.currentUser = $localStorage.currentUser;
+        $rootScope.organization = $localStorage.currentUser.Organization;
+        $rootScope.country = $localStorage.country;
+    }
 
     $ionicPlatform.ready(function () {
         // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard

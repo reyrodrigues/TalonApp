@@ -1,5 +1,5 @@
 angular.module('talon.common')
-    .service('pouchDBUtils', function (pouchDBDecorators) {
+    .factory('pouchDBUtils', function (pouchDBDecorators) {
         return {
             updatePouchDB: updatePouchDB,
             index: index

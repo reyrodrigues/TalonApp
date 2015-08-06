@@ -29,10 +29,6 @@
     "cordova-plugin-console",
     "cordova-plugin-whitelist",
     "org.apache.cordova.statusbar",
-    {
-      "locator": "https://github.com/litehelpers/Cordova-sqlcipher-adapter",
-      "id": "com.brodysoft.cordova.sqlcipher"
-    },
     "cordova-plugin-file",
     "cordova-plugin-file-transfer",
     {
@@ -55,7 +51,8 @@
     {
       "locator": "https://github.com/wildabeast/BarcodeScanner.git",
       "id": "com.phonegap.plugins.barcodescanner"
-    }
+    },
+    "cordova-sqlite-storage"
   ],
   "cordovaPlatforms": [
     "ios",

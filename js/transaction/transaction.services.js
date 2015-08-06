@@ -2,8 +2,8 @@
 
 angular.module('talon.transaction')
     .service('transactionData', function beneficiaryData($http, $localStorage, $q, talonRoot,
-        $timeout, $cordovaFile, $cordovaFileTransfer, $settings, transactionHistoryDB, $rootScope,
-        beneficiaryData, httpUtils, qrCodeDB) {
+        $timeout, $cordovaFile, $cordovaFileTransfer, $settings, transactionHistoryDB,
+        $rootScope, cardLoadHistoryDB, beneficiaryData, httpUtils) {
 
         return {
             processTransaction: processTransaction,
@@ -52,11 +52,19 @@ angular.module('talon.transaction')
             value = Math.round(value * 1000) / 1000;
             $settings.hashApplication().then(function (hash) {
                 var payload = '1933|' + value + '|' + time.toString(16);
-                 if ($localStorage.authorizationData.tokenType == 2) {
-                      alert('You are logged in as an administrator. The POS mode is available for demo use only. The transaction will not be completed.')
-                      def.resolve();
-                      return;
-                  }
+                if ($localStorage.authorizationData.tokenType == 2) {
+                    alert('You are logged in as an administrator. The POS mode is available for demo use only. The transaction will not be completed.')
+                    def.resolve();
+                    return;
+                }
+
+                if (time > currentPayload[1]) {
+                    cardLoadHistoryDB.upsert({
+                        beneficiaryId: cardLoadHistoryDB,
+                        amountLoaded: pendingPayload[0],
+                        distributionDate: pendingPayload[1].unix()
+                    });
+                }
 
                 $timeout(function () {
                     beneficiaryData.updateCardData(payload, beneficiary.CardKey, pin, beneficiary.CardId).then(function (update) {
@@ -134,7 +142,7 @@ angular.module('talon.transaction')
                     }
 
                     transaction.confirmationCode = response.ConfirmationCode;
-                    transactionHistoryDB.put(transaction);
+                    transactionHistoryDB.upsert(transaction._id, transaction);
                     def.resolve();
                 })
             }).catch(function () {

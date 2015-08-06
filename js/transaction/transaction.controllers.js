@@ -29,7 +29,7 @@ angular.module('talon.transaction')
         }
     })
     .controller('POSController', function POSController($scope, $ionicModal, $q, transactionData, beneficiaryData,
-        $cordovaSpinnerDialog, $timeout, $cordovaBarcodeScanner, $filter) {
+        $cordovaSpinnerDialog, $timeout, $filter) {
 
         $scope.decimalChar = '.';
         $scope.value = '';
@@ -51,6 +51,7 @@ angular.module('talon.transaction')
         $scope.processQR = function () {
             var failFunction = function (error) {
                 alert(error.message);
+                console.log(error);
             };
 
             if (DEBUG) {
@@ -82,42 +83,47 @@ angular.module('talon.transaction')
                 return;
             }
 
-            $cordovaBarcodeScanner.scan().then(function (result) {
-             console.log(JSON.stringify(result));
-             
-                if (result.cancelled) {
-                    return;
-                }
-                var code = result.text;
+            if (window.cordova && window.cordova.plugins && cordova.plugins.barcodeScanner) {
+                cordova.plugins.barcodeScanner.scan(function win(result) {
+                    $timeout(function () {
+                        console.log(JSON.stringify(result));
 
-                $scope.showPinModal().then(function (pin) {
-                    beneficiaryData.validateQRCode(code, pin).then(function (voucher) {
-                        if (moment.unix(voucher.validAfter) > moment()) {
-                            alert('Voucher can\'t be used before ' + moment.unix(voucher.validAfter).locale('en-Us').format('L') + '.');
+                        if (result.cancelled) {
                             return;
                         }
+                        var code = result.text;
 
-                        $scope.showQRConfirmationModal(voucher, pin).then(function (vouchers) {
-                            var beneficiary = vouchers[0].beneficiary;
-                            var voucherCodes = vouchers.map(function (v) {
-                                return v.voucherCode;
-                            });
+                        $scope.showPinModal().then(function (pin) {
+                            beneficiaryData.validateQRCode(code, pin).then(function (voucher) {
+                                if (moment.unix(voucher.validAfter) > moment()) {
+                                    alert('Voucher can\'t be used before ' + moment.unix(voucher.validAfter).locale('en-Us').format('L') + '.');
+                                    return;
+                                }
 
-                            transactionData.debitQRCodes(voucherCodes, beneficiary)
-                                .then(function () {
-                                    var amountToBeCharged = vouchers.map(function (a) {
-                                        return a.value;
-                                    }).reduce(function (a, b) {
-                                        return a + b;
-                                    }, 0);
+                                $scope.showQRConfirmationModal(voucher, pin).then(function (vouchers) {
+                                    var beneficiary = vouchers[0].beneficiary;
+                                    var voucherCodes = vouchers.map(function (v) {
+                                        return v.voucherCode;
+                                    });
 
-                                    TransactionCompleted(amountToBeCharged);
-                                })
-                                .catch(failFunction);
+                                    transactionData.debitQRCodes(voucherCodes, beneficiary)
+                                        .then(function () {
+                                            var amountToBeCharged = vouchers.map(function (a) {
+                                                return a.value;
+                                            }).reduce(function (a, b) {
+                                                return a + b;
+                                            }, 0);
+
+                                            TransactionCompleted(amountToBeCharged);
+                                        })
+                                        .catch(failFunction);
+                                }).catch(failFunction);
+                            }).catch(failFunction);
                         }).catch(failFunction);
-                    }).catch(failFunction);
-                }).catch(failFunction);
-            }).catch(failFunction);
+                    });
+
+                }, failFunction);
+            }
         };
 
         $scope.process = function () {
@@ -204,7 +210,7 @@ angular.module('talon.transaction')
     })
 
 
-.controller('QRConfirmationController', function PinController($scope, $location, $cordovaBarcodeScanner, beneficiaryData, $timeout) {
+.controller('QRConfirmationController', function PinController($scope, $location, beneficiaryData, $timeout) {
     $scope.addVoucher = function () {
         var failFunction = function (error) {
             alert(error.message);
@@ -212,36 +218,40 @@ angular.module('talon.transaction')
         };
         var pin = $scope.pin;
 
-        if (window.cordova && window.cordova.plugins && window.cordova.plugins.barcodeScanner) {
-            $cordovaBarcodeScanner.scan().then(function (result) {
-                var code = result.text;
-                if (result.cancelled) {
-                    console.log(result.cancelled);
-                    return;
-                }
 
-                beneficiaryData.validateQRCode(code, pin).then(function (voucher) {
-                    var currentCodes = $scope.vouchers.map(function (v) {
-                        return v.voucherCode;
-                    });
-
-                    var beneficiary = $scope.vouchers[0].beneficiary;;
-                    if (moment.unix(voucher.validAfter) > moment()) {
-                        alert('Voucher can\'t be used before ' + moment.unix(voucher.validAfter).locale('en-Us').format('L') + '.');
-                        return;
-                    }
-                    if (voucher.beneficiary.BeneficiaryId != beneficiary.BeneficiaryId) {
-                        alert('Voucher belongs to a different beneficiary.');
-                        return;
-                    }
-                    if (currentCodes.indexOf(voucher.voucherCode) > -1) {
-                        alert('Voucher already added');
+        if (window.cordova && window.cordova.plugins && cordova.plugins.barcodeScanner) {
+            cordova.plugins.barcodeScanner.scan(function win(result) {
+                $timeout(function () {
+                    var code = result.text;
+                    if (result.cancelled) {
+                        console.log(result.cancelled);
                         return;
                     }
 
-                    $scope.vouchers.push(voucher);
-                }).catch(failFunction);
-            });
+                    beneficiaryData.validateQRCode(code, pin).then(function (voucher) {
+
+                        var currentCodes = $scope.vouchers.map(function (v) {
+                            return v.voucherCode;
+                        });
+
+                        var beneficiary = $scope.vouchers[0].beneficiary;;
+                        if (moment.unix(voucher.validAfter) > moment()) {
+                            alert('Voucher can\'t be used before ' + moment.unix(voucher.validAfter).locale('en-Us').format('L') + '.');
+                            return;
+                        }
+                        if (voucher.beneficiary.BeneficiaryId != beneficiary.BeneficiaryId) {
+                            alert('Voucher belongs to a different beneficiary.');
+                            return;
+                        }
+                        if (currentCodes.indexOf(voucher.voucherCode) > -1) {
+                            alert('Voucher already added');
+                            return;
+                        }
+
+                        $scope.vouchers.push(voucher);
+                    }).catch(failFunction);
+                });
+            }, failFunction);
         }
     };
 
