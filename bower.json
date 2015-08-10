@@ -15,5 +15,8 @@
     "jszip": "Stuk/jszip#~2.5.0",
     "jszip-utils": "Stuk/jszip-utils#~0.0.2",
     "jquery": "~2.1.4"
+  },
+  "resolutions": {
+    "angular": "~1.4.1"
   }
 }

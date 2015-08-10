@@ -117,6 +117,14 @@ angular.module('talon.settings')
             return qrCodeDB.replace(data);
         }
 
+function UploadPayloadToNetwork(argument) {
+    var def = $q.defer();
+    if (DEBUG) {
+        if (!window.cordova) {
+            def.resolve();
+        }
+    }
+}
 
         function LoadPayloadFromNetwork() {
             var def = $q.defer();
