@@ -63,7 +63,7 @@ angular.module('talon.auth')
                 deferred.resolve();
             } else {
 
-                $http.get(serviceRoot + 'api/Account/Me')
+                $http.get(serviceRoot + 'api/ApplicationUser/Me')
                     .then(function (response) {
                         $rootScope.currentUser = response.data;
                         $localStorage.currentUser = response.data;

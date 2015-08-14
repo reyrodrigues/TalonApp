@@ -20,19 +20,19 @@ angular.module('talon.common')
 
 
             this.replace = function (col) {
-             $localStorage[internalName] = col || [];
+                $localStorage[internalName] = col || [];
 
                 var def = $q.defer();
                 def.resolve(col)
                 return def.promise;
-            }
+            };
 
             this.upsert = function (_id, obj) {
                 var def = $q.defer();
                 var filtered = $localStorage[internalName] || [];
 
                 filtered = filtered.filter(function (o) {
-                    return o._id != _id;
+                    return o && o._id && o._id != _id;
                 })
                 filtered.push(obj);
                 $localStorage[internalName] = filtered;
@@ -41,6 +41,10 @@ angular.module('talon.common')
                 def.resolve(obj);
 
                 return def.promise;
+            };
+
+            this.all = function () {
+                return $localStorage[internalName];
             }
         }
     })

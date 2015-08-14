@@ -48,11 +48,19 @@ angular.module('talon.transaction')
                 $scope.value = $scope.value + digit;
         };
 
+        $scope.qrDialogOpen = false;
+
         $scope.processQR = function () {
             var failFunction = function (error) {
+                $scope.qrDialogOpen = false;
                 alert(error.message);
                 console.log(error);
             };
+
+            if ($scope.qrDialogOpen) {
+                return;
+            }
+            $scope.qrDialogOpen = true;
 
             if (DEBUG) {
                 var code = localStorage.qrCode;
@@ -86,7 +94,7 @@ angular.module('talon.transaction')
             if (window.cordova && window.cordova.plugins && cordova.plugins.barcodeScanner) {
                 cordova.plugins.barcodeScanner.scan(function win(result) {
                     $timeout(function () {
-                        console.log(JSON.stringify(result));
+                        $scope.qrDialogOpen = false;
 
                         if (result.cancelled) {
                             return;
@@ -105,6 +113,8 @@ angular.module('talon.transaction')
                                     var voucherCodes = vouchers.map(function (v) {
                                         return v.voucherCode;
                                     });
+
+                                    
 
                                     transactionData.debitQRCodes(voucherCodes, beneficiary)
                                         .then(function () {

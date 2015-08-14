@@ -101,10 +101,8 @@ angular.module('talon.nfc')
             var def = $q.defer();
 
             if (DEBUG) {
-                if (!window.cordova) {
-                    def.resolve(UseMock());
-                    return def.promise;
-                }
+                def.resolve(UseMock());
+                return def.promise;
 
                 function UseMock() {
                     if (!$localStorage.mockCard) {
@@ -192,10 +190,8 @@ angular.module('talon.nfc')
             var def = $q.defer();
 
             if (DEBUG) {
-                if (!window.cordova) {
-                    def.resolve(UseMock());
-                    return def.promise;
-                }
+                def.resolve(UseMock());
+                return def.promise;
 
                 function UseMock() {
                     return readIdAndData().then(function (tag) {
@@ -241,16 +237,14 @@ angular.module('talon.nfc')
 
         // Write data into card
         function writeData(dataHex, id) {
-         console.log('Writing data');
-         console.log(dataHex);
-         
+            console.log('Writing data');
+            console.log(dataHex);
+
             var def = $q.defer();
 
             if (DEBUG) {
-                if (!window.cordova) {
-                    def.resolve(UseMock(dataHex, id));
-                    return def.promise;
-                }
+                def.resolve(UseMock(dataHex, id));
+                return def.promise;
 
                 function UseMock(data, id) {
                     $localStorage.mockCard = [data, id]

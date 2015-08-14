@@ -48,23 +48,11 @@
       "id": "org.rescue.nfcCardPlugin"
     },
     "cordova-plugin-screen-orientation",
-    {
-      "locator": "https://github.com/wildabeast/BarcodeScanner.git",
-      "id": "com.phonegap.plugins.barcodescanner"
-    },
-    "cordova-sqlite-storage"
+    "io.litehelpers.cordova.sqlite",
+    "phonegap-plugin-barcodescanner"
   ],
   "cordovaPlatforms": [
     "ios",
-    {
-      "platform": "android",
-      "version": "",
-      "locator": "android"
-    },
-    {
-      "platform": "ios",
-      "version": "",
-      "locator": "ios"
-    }
+    "android"
   ]
 }

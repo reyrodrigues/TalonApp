@@ -25,20 +25,44 @@ angular.module('talon.common')
             db.createIndex = pouchDBDecorators.qify(db.createIndex);
         }
     })
-    .service('httpUtils', function ($q, $http, talonRoot) {
+    .service('httpUtils', function ($q, $http, talonRoot, $cordovaNetwork) {
         return {
             checkConnectivity: checkConnectivity
         };
 
         function checkConnectivity() {
             var def = $q.defer();
-            $http.get(talonRoot + 'api/App/MobileClient/IsAlive').then(function (r) {
-                if (r.status !== 200) {
+
+            var isOnline = true;
+            if (DEBUG) {
+                isOnline = true;
+            } else {
+                isOnline = $cordovaNetwork.isOnline();
+            }
+
+            if (!isOnline) {
+                def.reject();
+                return def.promise;
+            }
+
+            var echo = forge.util.bytesToHex(forge.random.getBytes(16));
+            $http.get(talonRoot + 'api/App/MobileClient/IsAlive?echo=' + echo, {
+                    timeout: 2000,
+                    cache: false
+                }).then(function (r) {
+                    if (r.status !== 200 || echo != r.data) {
+                        def.reject();
+                    } else {
+                        def.resolve();
+                    }
+                }, function () {
+                    console.log('Fail?');
                     def.reject();
-                } else {
-                    def.resolve();
-                }
-            }).catch(def.reject.bind(def));
+                })
+                .catch(function () {
+                    console.log('Fail?');
+                    def.reject();
+                });
 
             return def.promise;
         }

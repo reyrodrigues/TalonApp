@@ -59,11 +59,15 @@ angular.module('talon.transaction')
                 }
 
                 if (time > currentPayload[1]) {
-                    cardLoadHistoryDB.upsert({
-                        beneficiaryId: cardLoadHistoryDB,
-                        amountLoaded: pendingPayload[0],
+                    var cardLoad = {
+                        _id: beneficiary.BeneficiaryId + '-' + moment().unix(),
+                        beneficiaryId: beneficiary.BeneficiaryId,
+                        amount: pendingPayload[0],
+                        date: moment().unix(),
                         distributionDate: pendingPayload[1].unix()
-                    });
+                    };
+
+                    cardLoadHistoryDB.upsert(cardLoad._id, cardLoad);
                 }
 
                 $timeout(function () {
@@ -101,6 +105,7 @@ angular.module('talon.transaction')
                     return;
                 }
 
+
                 var promises = vouchers.map(function (v) {
                     return processTransaction({
                         type: 3,
@@ -124,8 +129,8 @@ angular.module('talon.transaction')
 
         function processTransaction(transaction) {
             var def = $q.defer();
-            transaction._id = transaction.beneficiaryId + '-' + transaction.date;
             transaction.transactionCode = forge.util.bytesToHex(forge.random.getBytes(8));
+            transaction._id = transaction.beneficiaryId + '-' + transaction.date + '-' + transaction.transactionCode;
             transaction.location = $rootScope.currentLocation;
             transaction.quarantine = false;
 
@@ -147,7 +152,7 @@ angular.module('talon.transaction')
                 })
             }).catch(function () {
                 transaction.quarantine = true;
-                transactionHistoryDB.put(transaction);
+                transactionHistoryDB.upsert(transaction._id, transaction);
                 def.resolve();
             });
             return def.promise
