@@ -49,10 +49,24 @@
     },
     "cordova-plugin-screen-orientation",
     "io.litehelpers.cordova.sqlite",
-    "phonegap-plugin-barcodescanner"
+    "phonegap-plugin-barcodescanner",
+    {
+      "locator": "../../cordova-HTTP",
+      "id": "com.synconset.cordovaHTTP"
+    }
   ],
   "cordovaPlatforms": [
     "ios",
-    "android"
+    "android",
+    {
+      "platform": "android",
+      "version": "",
+      "locator": "android"
+    },
+    {
+      "platform": "ios",
+      "version": "",
+      "locator": "ios"
+    }
   ]
 }
