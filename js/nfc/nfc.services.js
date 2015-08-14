@@ -136,8 +136,16 @@ angular.module('talon.nfc')
                 }
                 return def.promise;
             } else if (platform.toLowerCase().indexOf('win') > -1 || platform.toLowerCase().indexOf('wp') > -1) {
-                return def.promise;
+                if (window.nfc) {
+                    window.nfc.enabled(function () {
+                        def.resolve(UseNDEF());
+                    }, function () {
+                        def.resolve(null);
 
+                    });
+                } else {
+                    def.resolve(null);
+                }
             }
 
             function UseNDEF() {
@@ -215,7 +223,16 @@ angular.module('talon.nfc')
                 }
                 return def.promise;
             } else if (platform.toLowerCase().indexOf('win') > -1 || platform.toLowerCase().indexOf('wp') > -1) {
-                def.resolve(null);
+                if (window.nfc) {
+                    window.nfc.enabled(function () {
+                        def.resolve(UseNDEF());
+                    }, function () {
+                        def.resolve(null);
+
+                    });
+                } else {
+                    def.resolve(null);
+                }
                 return def.promise;
             }
 
@@ -267,8 +284,16 @@ angular.module('talon.nfc')
                 }
                 return def.promise;
             } else if (platform.toLowerCase().indexOf('win') > -1 || platform.toLowerCase().indexOf('wp') > -1) {
-                return def.promise;
+                if (window.nfc) {
+                    window.nfc.enabled(function () {
+                        def.resolve(UseNDEF(dataHex, id));
+                    }, function () {
+                        def.resolve(null);
 
+                    });
+                } else {
+                    def.resolve(null);
+                }
             }
 
             function UseNDEF(data, id) {

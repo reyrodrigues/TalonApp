@@ -10,7 +10,11 @@ angular.module('talon.settings')
 
         function hashApplication() {
             if (DEBUG) {
-                return $q.when({});
+                return $q.when([]);
+            }
+
+            if (!window.cordova || !window.cordova.file) {
+                return $q.when([]);
             }
 
             var applicationDir = cordova.file.applicationDirectory;
