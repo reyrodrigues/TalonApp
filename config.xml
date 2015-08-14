@@ -8,10 +8,9 @@
       Ionic Framework Team
     </author>
   <content src="index.html"/>
+  <access origin="https://talon.rescue.org/"/>
   <access origin="*"/>
-  <access origin="http://10.10.10.254/"/>
-  <access origin=".*"/>
-  
+
   <allow-intent href="*"/>
   <allow-navigation href="*"/>
   <allow-navigation href="http://*/"/>

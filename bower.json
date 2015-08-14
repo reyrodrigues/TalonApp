@@ -14,7 +14,8 @@
     "pouchdb-upsert": "~1.1.1",
     "jszip": "Stuk/jszip#~2.5.0",
     "jszip-utils": "Stuk/jszip-utils#~0.0.2",
-    "jquery": "~2.1.4"
+    "jquery": "~2.1.4",
+    "font-awesome": "~4.4.0"
   },
   "resolutions": {
     "angular": "~1.4.1"

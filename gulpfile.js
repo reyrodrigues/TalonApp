@@ -34,7 +34,7 @@ gulp.task('compress', ['scripts'], function () {
         .pipe(uglify({
             mangle: true,
             compress: {
-                drop_console: false,
+                drop_console: true,
                 global_defs: {
                     DEBUG: false
                 }
