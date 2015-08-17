@@ -1,19 +1,19 @@
-<ion-modal-view view-title="Confirmation" ng-controller="ConfirmationController">
+<ion-modal-view ng-controller="ConfirmationController">
     <ion-header-bar class="bar bar-balanced">
-        <h1 class="title">Confirmation</h1>
+        <h1 class="title" translate>Confirmation</h1>
     </ion-header-bar>
     <ion-content>
         <div class="list">
-            <div class="item item-divider">Value of this transaction</div>
+            <div class="item item-divider" translate>Value of this transaction</div>
             <div class="item" style="text-align: right;">&nbsp;{{ data.value|currency:country.CurrencyIsoCode+' ' }}</div>
 
-            <div class="item item-divider">Value in card</div>
+            <div class="item item-divider translate">Value in card</div>
             <div class="item" style="text-align: right;">&nbsp;{{ data.card.current[0]|currency:country.CurrencyIsoCode+' ' }}</div>
 
-            <div class="item item-divider" ng-if="data.card.pending[0]">Pending card load value</div>
+            <div class="item item-divider" ng-if="data.card.pending[0]" translate>Pending card load value</div>
             <div class="item" style="text-align: right;" ng-if="data.card.pending[0]">&nbsp;{{ data.card.pending[0]|currency:country.CurrencyIsoCode+' ' }}</div>
 
-            <div class="item item-divider">Card value after transaction</div>
+            <div class="item item-divider" translate>Card value after transaction</div>
             <div class="item" style="text-align: right;">&nbsp;{{ (total > 0 ? total: 0)|currency:country.CurrencyIsoCode+' ' }}</div>
 
 
@@ -22,10 +22,10 @@
         </div>
         <div class="row">
             <div class="col col-33">
-                <button class="button button-assertive button-block" ng-click="cancel()">Cancel</button>
+                <button class="button button-assertive button-block" ng-click="cancel()" translate>Cancel</button>
             </div>
             <div class="col col-67" ng-if="total >= 0">
-                <button class="button button-positive button-block" ng-click="pay()">Pay with card</button>
+                <button class="button button-positive button-block" ng-click="pay()" translate>Pay with card</button>
             </div>
         </div>
     </ion-content>

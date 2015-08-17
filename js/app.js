@@ -13,15 +13,28 @@ angular.module('talon', ['ionic',
     'talon.beneficiary',
     'talon.common',
     'talon.nfc',
-    'talon.transaction'
+    'talon.transaction',
+    'gettext'
 ])
 
-.run(function ($ionicPlatform, $rootScope, $timeout, $localStorage) {
+.run(function ($ionicPlatform, $rootScope, $timeout, $localStorage, gettextCatalog, $ionicHistory) {
+    $rootScope.$watch('currentLocale', function () {
+        gettextCatalog.setCurrentLanguage($rootScope.currentLocale);
+        moment.locale($rootScope.currentLocale);
+
+        var rtl = ['ar', 'he'];
+        $rootScope.currentDirection = rtl.indexOf($rootScope.currentLocale) > -1 ? 'right' : 'left';
+    })
+
+
+    $rootScope.currentLocale = 'en';
+
     if ($localStorage.currentUser) {
 
         $rootScope.currentUser = $localStorage.currentUser;
         $rootScope.organization = $localStorage.currentUser.Organization;
         $rootScope.country = $localStorage.country;
+        $rootScope.currentLocale = $localStorage.country.LanguageCode || 'en';
     }
 
     $ionicPlatform.ready(function () {
@@ -72,8 +85,7 @@ angular.module('talon', ['ionic',
         .state('app', {
         url: '/app',
         abstract: true,
-        templateUrl: 'templates/menu.html',
-        controller: 'AppController'
+        templateUrl: 'templates/menu.html'
     })
 
     .state('app.pos', {

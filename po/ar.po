@@ -1,0 +1,294 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.8.4\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
+"&& n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5);\n"
+
+#: templates/pin-code.html:61 templates/pos.html:56
+msgid "0"
+msgstr "0"
+
+#: templates/pin-code.html:25 templates/pos.html:20
+msgid "1"
+msgstr "1"
+
+#: templates/pin-code.html:28 templates/pos.html:23
+msgid "2"
+msgstr "2"
+
+#: templates/pin-code.html:31 templates/pos.html:26
+msgid "3"
+msgstr "3"
+
+#: templates/pin-code.html:36 templates/pos.html:31
+msgid "4"
+msgstr "4"
+
+#: templates/pin-code.html:39 templates/pos.html:34
+msgid "5"
+msgstr "5"
+
+#: templates/pin-code.html:42 templates/pos.html:37
+msgid "6"
+msgstr "6"
+
+#: templates/pin-code.html:47 templates/pos.html:42
+msgid "7"
+msgstr "7"
+
+#: templates/pin-code.html:50 templates/pos.html:45
+msgid "8"
+msgstr "8"
+
+#: templates/pin-code.html:53 templates/pos.html:48
+msgid "9"
+msgstr "9"
+
+#: templates/assign-voucher-book.html:1 templates/view-beneficiary.html:18
+msgid "Assign Voucher Book"
+msgstr "تعيين كتاب الإيصال"
+
+#: templates/menu.html:24
+msgid "Beneficiary"
+msgstr "المستفيد"
+
+#: js/beneficiary/beneficiary.services.js:39
+msgid "Beneficiary not registered"
+msgstr "المستفيد غير مسجلة"
+
+#: templates/assign-voucher-book.html:7 templates/confirmation.html:25
+#: templates/qr-confirmation.html:20
+msgid "Cancel"
+msgstr "إلغاء"
+
+#: templates/confirmation.html:16
+msgid "Card value after transaction"
+msgstr "قيمة بطاقة بعد الحركة"
+
+#: templates/qr-confirmation.html:10
+msgid "Code"
+msgstr "الكود"
+
+#: templates/confirmation.html:3 templates/qr-confirmation.html:3
+msgid "Confirmation"
+msgstr "تأكيد"
+
+#: templates/settings.html:10
+msgid "Country"
+msgstr "الدولة"
+
+#: templates/assign-voucher-book.html:3
+msgid "Distribution"
+msgstr "توزيع"
+
+#: templates/sync.html:12
+msgid "Download Data From Server"
+msgstr "تحميل البيانات من الملقم"
+
+#: templates/pin-code.html:5
+msgid "Enter Pin"
+msgstr "إدخال الرمز السري"
+
+#: js/transaction/transaction.controllers.js:151
+msgid "Invalid PIN."
+msgstr "غير صالح"
+
+#: js/beneficiary/beneficiary.services.js:47
+msgid "Invalid pin."
+msgstr "غير صالح"
+
+#: templates/login.html:17
+msgid "Invalid username or password."
+msgstr "هناك خطا في اسم المستخدم او كلمة المرور"
+
+#: js/beneficiary/beneficiary.services.js:31
+msgid "Invalid voucher."
+msgstr "قسيمة غير صالحة"
+
+#: templates/menu.html:32
+msgid "Invoices"
+msgstr "الفواتير"
+
+#: templates/sync.html:9
+msgid "Last Synced On:"
+msgstr "مزامن آخر على:"
+
+#: templates/view-beneficiary.html:10
+msgid "Location:"
+msgstr "الموقع الجغرافي:"
+
+#: templates/login.html:21
+msgid "Log in"
+msgstr "تسجيل الدخول"
+
+#: templates/login.html:3
+msgid "Login"
+msgstr "تسجيل الدخول"
+
+#: templates/settings.html:14
+msgid "Logout"
+msgstr "تسجيل خروج"
+
+#: templates/view-beneficiary.html:7
+msgid "Mobile Number:"
+msgstr "رقم الجوال"
+
+#: templates/view-beneficiary.html:4
+msgid "Name:"
+msgstr "الاسم:"
+
+#: js/transaction/transaction.controllers.js:155
+msgid "Not enough credit"
+msgstr "الائتمان غير كافية"
+
+#: js/beneficiary/beneficiary.controllers.js:113
+msgid "PIN"
+msgstr "ثبت"
+
+#: templates/menu.html:20 templates/pos.html:1
+msgid "POS Mode"
+msgstr "نقطة البيع\t"
+
+#: templates/login.html:14 templates/login.html:15
+msgid "Password"
+msgstr "كلمة السر"
+
+#: templates/confirmation.html:28
+msgid "Pay with card"
+msgstr "الدفع بواسطة بطاقة"
+
+#: templates/confirmation.html:13
+msgid "Pending card load value"
+msgstr "قيمة تحميل بطاقة معلقة"
+
+#: js/beneficiary/beneficiary.controllers.js:129
+#: js/beneficiary/beneficiary.controllers.js:14
+#: js/beneficiary/beneficiary.controllers.js:27
+#: js/transaction/transaction.controllers.js:164
+#: js/transaction/transaction.controllers.js:177
+msgid "Please hold NFC card close to reader"
+msgstr "يرجى إجراء بطاقة نفك قريبة من القارئ"
+
+#: templates/signature-pad.html:4
+msgid "Please sign below"
+msgstr "الرجاء التوقيع أدناه"
+
+#: templates/qr-confirmation.html:23
+msgid "Process transaction"
+msgstr "الحركة عملية"
+
+#: templates/view-beneficiary.html:15
+msgid "Provision Card"
+msgstr "بطاقة الاعتماد"
+
+#: js/beneficiary/beneficiary.controllers.js:129
+#: js/beneficiary/beneficiary.controllers.js:27
+#: js/transaction/transaction.controllers.js:164
+#: js/transaction/transaction.controllers.js:177
+msgid "Read Card"
+msgstr "بطاقة القراءة"
+
+#: templates/menu.html:28
+msgid "Receipts"
+msgstr "الإيصالات"
+
+#: js/beneficiary/beneficiary.controllers.js:14
+msgid "Reload Card"
+msgstr "أعادة التحميل"
+
+#: templates/qr-confirmation.html:17
+msgid "Scan another voucher"
+msgstr "مسح آخر قسيمة"
+
+#: templates/assign-voucher-book.html:10
+msgid "Scan first page"
+msgstr "مسح الصفحة الأولى"
+
+#: templates/list-beneficiaries.html:4
+msgid "Search"
+msgstr "بحث"
+
+#: templates/list-beneficiaries.html:1
+msgid "Select Beneficiary"
+msgstr "حدد المستفيد"
+
+#: templates/view-beneficiary.html:12
+msgid "Set Pin"
+msgstr "تعيين رقم التعريف الشخصي"
+
+#: templates/menu.html:41 templates/settings.html:1 templates/settings.html:3
+msgid "Settings"
+msgstr "إعدادات"
+
+#: templates/menu.html:36 templates/sync.html:1
+msgid "Sync Data"
+msgstr "مزامنة البيانات"
+
+#: js/transaction/transaction.controllers.js:196
+msgid "The transaction in the amount of"
+msgstr "الحركة في مبلغ من"
+
+#: js/transaction/transaction.controllers.js:160
+msgid "There is no value to be charged."
+msgstr "لا توجد قيمة تكون مكلفة."
+
+#: js/beneficiary/beneficiary.controllers.js:113
+msgid "Updating PIN"
+msgstr "تحديث PIN"
+
+#: templates/login.html:10 templates/login.html:11
+msgid "Username"
+msgstr "المستخدم"
+
+#: templates/confirmation.html:7
+msgid "Value of this transaction"
+msgstr "قيمة هذه الصفقة"
+
+#: templates/qr-confirmation.html:13
+msgid "Value:"
+msgstr "اسم القيمة:"
+
+#: templates/view-beneficiary.html:1
+msgid "View Beneficiary"
+msgstr "رأي المستفيدين"
+
+#: templates/qr-confirmation.html:7
+msgid "Voucher"
+msgstr "قسيمة شراء"
+
+#: js/transaction/transaction.controllers.js:262
+msgid "Voucher already added"
+msgstr "الإيصال بالفعل بإضافة"
+
+#: js/transaction/transaction.controllers.js:258
+msgid "Voucher belongs to a different beneficiary."
+msgstr "قسيمة ينتمي إلى مستفيد آخر."
+
+#: js/transaction/transaction.controllers.js:109
+#: js/transaction/transaction.controllers.js:253
+msgid "Voucher can't be used before"
+msgstr "لا يمكن استخدام القسيمة قبل"
+
+#: js/transaction/transaction.services.js:104
+#: js/transaction/transaction.services.js:57
+msgid ""
+"You are logged in as an administrator. The POS mode is available for demo "
+"use only. The transaction will not be completed."
+msgstr ""
+"دخولك كمسؤول. وضع نقاط البيع متاح للاستخدام التجريبي فقط. لن تكتمل الصفقة."
+
+#: js/transaction/transaction.controllers.js:196
+msgid "has been completed."
+msgstr "قد اكتمل."
+
+msgid "Unknown"
+msgstr "غير معروف"

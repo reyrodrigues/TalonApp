@@ -5,6 +5,8 @@ angular.module('talon.transaction', [
         'talon.nfc',
         'talon.common',
         'talon.settings',
-        'pouchdb'
+        'pouchdb',
+        'gettext'
     ])
+    
 ;

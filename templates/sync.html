@@ -1,4 +1,4 @@
-<ion-view view-title="Talon" ng-controller="SyncController">
+<ion-view view-title="{{'Sync Data'|translate}}" ng-controller="SyncController">
     <ion-content class="">
         <ion-refresher pulling-text="Pull to refresh..." on-refresh="setupVendor()">
         </ion-refresher>
@@ -6,10 +6,10 @@
             <ion-item ng-repeat="item in items"></ion-item>
         </ion-list>
         <div class="row padding">
-            <div class="col">Last Synced On:</div>
-            <div class="col">{{ lastSynced || 'Unknown' }}</div>
+            <div class="col" translate>Last Synced On:</div>
+            <div class="col">{{ lastSynced || 'Unknown'|translate }}</div>
         </div>
-        <button class="button button-block button-positive" ng-click="setupVendor()">
+        <button class="button button-block button-positive" ng-click="setupVendor()" translate>
             Download Data From Server
         </button>
     </ion-content>

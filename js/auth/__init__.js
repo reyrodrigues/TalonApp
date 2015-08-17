@@ -3,5 +3,6 @@ angular.module('talon.auth', [
         'ngCordova',
         'talon.constants',
         'pouchdb',
+        'gettext'
     ])
 ;

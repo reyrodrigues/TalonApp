@@ -1,21 +1,21 @@
-<ion-view view-title="View Beneficiary" ng-controller="ViewBeneficiaryController">
+<ion-view view-title="{{'View Beneficiary'|translate}}" ng-controller="ViewBeneficiaryController">
     <ion-content class="padding">
         <div class="row">
-            <strong>Name:</strong> &nbsp; {{ beneficiary.Name }}
+            <strong translate>Name:</strong> &nbsp; {{ beneficiary.Name }}
         </div>
         <div class="row">
-            <strong>Mobile Number:</strong> &nbsp; {{ beneficiary.MobileNumber }}
+            <strong translate>Mobile Number:</strong> &nbsp; {{ beneficiary.MobileNumber }}
         </div>
         <div class="row">
-            <strong>Location:</strong> &nbsp; {{ beneficiary.Location.Name }}
+            <strong translate>Location:</strong> &nbsp; {{ beneficiary.Location.Name }}
         </div>
-        <button class="button button-block button-positive" ng-click="setPin()">
+        <button class="button button-block button-positive" ng-click="setPin()" translate>
             Set Pin
         </button>
-        <button class="button button-block button-positive" ng-click="provisionCard()">
+        <button class="button button-block button-positive" ng-click="provisionCard()" translate>
             Provision Card
         </button>
-        <button class="button button-block button-positive" ng-click="assignVoucherBook()">
+        <button class="button button-block button-positive" ng-click="assignVoucherBook()" translate>
             Assign Voucher Book
         </button>
     </ion-content>

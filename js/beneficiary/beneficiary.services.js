@@ -1,7 +1,7 @@
 angular.module('talon.beneficiary')
     .service('beneficiaryData', function beneficiaryData($http, $localStorage, keyDB, cardLoadDB, $q, talonRoot, qrCodeDB,
-        $nfcTools, $ionicPlatform, $timeout, $cordovaFile, $cordovaFileTransfer, httpUtils, encryption, $state) {
-
+        $nfcTools, $ionicPlatform, $timeout, $cordovaFile, $cordovaFileTransfer, httpUtils, encryption, $state, gettext, $filter) {
+var translate = $filter('translate')
 
 
         return {
@@ -28,7 +28,7 @@ angular.module('talon.beneficiary')
             ).then(function (res) {
                 var docs = res;
                 if (docs.length == 0) {
-                    throw new Error('Invalid voucher.');
+                    throw new Error(translate(gettext('Invalid voucher.')));
                 }
                 var voucher = docs[0];
                 return keyDB.find(
@@ -36,7 +36,7 @@ angular.module('talon.beneficiary')
                         return o.BeneficiaryId == voucher.BeneficiaryId;
                     }).then(function (res) {
                     if (res.length == 0) {
-                        throw new Error('Beneficiary not registered');
+                        throw new Error(translate(gettext('Beneficiary not registered')));
                     }
 
                     var beneficiary = res[0];
@@ -44,7 +44,7 @@ angular.module('talon.beneficiary')
                     var decryptedString = encryption.decrypt(encryptedData, pin, beneficiary.CardKey);
 
                     if (!decryptedString) {
-                        throw new Error('Invalid pin.');
+                        throw new Error(translate(gettext('Invalid pin.')));
                     }
 
                     var voucherValues = decryptedString.split('|');

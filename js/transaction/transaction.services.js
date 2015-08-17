@@ -3,7 +3,8 @@
 angular.module('talon.transaction')
     .service('transactionData', function beneficiaryData($http, $localStorage, $q, talonRoot,
         $timeout, $cordovaFile, $cordovaFileTransfer, $settings, transactionHistoryDB,
-        $rootScope, cardLoadHistoryDB, beneficiaryData, httpUtils) {
+        $rootScope, cardLoadHistoryDB, beneficiaryData, httpUtils, gettext, $filter) {
+        var translate = $filter('translate');
 
         return {
             processTransaction: processTransaction,
@@ -53,7 +54,7 @@ angular.module('talon.transaction')
             $settings.hashApplication().then(function (hash) {
                 var payload = '1933|' + value + '|' + time.toString(16);
                 if ($localStorage.authorizationData.tokenType == 2) {
-                    alert('You are logged in as an administrator. The POS mode is available for demo use only. The transaction will not be completed.')
+                    alert(translate(gettext('You are logged in as an administrator. The POS mode is available for demo use only. The transaction will not be completed.')));
                     def.resolve();
                     return;
                 }
@@ -100,7 +101,7 @@ angular.module('talon.transaction')
 
             $settings.hashApplication().then(function (hash) {
                 if ($localStorage.authorizationData.tokenType == 2) {
-                    alert('You are logged in as an administrator. The POS mode is available for demo use only. The transaction will not be completed.')
+                    alert(translate(gettext('You are logged in as an administrator. The POS mode is available for demo use only. The transaction will not be completed.')));
                     def.resolve();
                     return;
                 }

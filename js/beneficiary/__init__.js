@@ -4,6 +4,7 @@ angular.module('talon.beneficiary', [
         'talon.constants',
         'pouchdb',
         'talon.nfc',
-        'talon.common'
+        'talon.common',
+        'gettext'
     ])
 ;

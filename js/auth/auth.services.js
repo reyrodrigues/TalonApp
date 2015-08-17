@@ -54,6 +54,8 @@ angular.module('talon.auth')
                 }
 
                 $rootScope.country = $localStorage.country;
+                $rootScope.currentLocale = $localStorage.country.LanguageCode || 'en';
+
 
                 if ($rootScope.currentUser.Countries.length > 1) {
                     $rootScope.availableCountries = countries;
@@ -79,6 +81,7 @@ angular.module('talon.auth')
                         }
 
                         $rootScope.country = $localStorage.country;
+                        $rootScope.currentLocale = $localStorage.country.LanguageCode || 'en';
 
                         if ($rootScope.currentUser.Countries.length > 1) {
                             $rootScope.availableCountries = countries;
@@ -149,6 +152,7 @@ angular.module('talon.auth')
                 $rootScope.currentUser = $localStorage.currentUser;
                 $localStorage.country = $rootScope.currentUser.Country;
                 $rootScope.country = $localStorage.country;
+                $rootScope.currentLocale = $localStorage.country.LanguageCode || 'en';
 
                 deferred.resolve();
             } else {
@@ -162,6 +166,7 @@ angular.module('talon.auth')
                         }
 
                         $rootScope.country = $localStorage.country;
+                        $rootScope.currentLocale = $localStorage.country.LanguageCode || 'en';
 
                         deferred.resolve();
                     })

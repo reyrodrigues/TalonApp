@@ -29,7 +29,8 @@ angular.module('talon.transaction')
         }
     })
     .controller('POSController', function POSController($scope, $ionicModal, $q, transactionData, beneficiaryData,
-        $cordovaSpinnerDialog, $timeout, $filter) {
+        $cordovaSpinnerDialog, $timeout, $filter, gettext) {
+         var translate = $filter('translate');
 
         $scope.decimalChar = '.';
         $scope.value = '';
@@ -104,7 +105,8 @@ angular.module('talon.transaction')
                         $scope.showPinModal().then(function (pin) {
                             beneficiaryData.validateQRCode(code, pin).then(function (voucher) {
                                 if (moment.unix(voucher.validAfter) > moment()) {
-                                    alert('Voucher can\'t be used before ' + moment.unix(voucher.validAfter).locale('en-Us').format('L') + '.');
+                                    alert(translate(gettext('Voucher can\'t be used before')) +
+                                        ' ' + moment.unix(voucher.validAfter).format('L') + '.');
                                     return;
                                 }
 
@@ -114,7 +116,7 @@ angular.module('talon.transaction')
                                         return v.voucherCode;
                                     });
 
-                                    
+
 
                                     transactionData.debitQRCodes(voucherCodes, beneficiary)
                                         .then(function () {
@@ -145,20 +147,20 @@ angular.module('talon.transaction')
             };
 
             var invalidCardOrPin = function (argument) {
-                alert('Invalid PIN.');
+                alert(translate(gettext('Invalid PIN.')));
                 $cordovaSpinnerDialog.hide();
             };
             var noCredits = function (argument) {
-                alert('Not enough credit');
+                alert(translate(gettext('Not enough credit')));
                 $cordovaSpinnerDialog.hide();
             };
 
             if (!$scope.value) {
-                alert('There is no value to be charged.');
+                alert(translate(gettext('There is no value to be charged.')));
                 return;
             }
 
-            $cordovaSpinnerDialog.show('Read Card', 'Please hold NFC card close to reader', true);
+            $cordovaSpinnerDialog.show(translate(gettext('Read Card')), translate(gettext('Please hold NFC card close to reader')), true);
             beneficiaryData.readRawCardData().then(function (rawCardData) {
                 $cordovaSpinnerDialog.hide();
 
@@ -171,7 +173,7 @@ angular.module('talon.transaction')
                             card: data,
                             value: amountToBeCharged
                         }, pin).then(function () {
-                            $cordovaSpinnerDialog.show('Read Card', 'Please hold NFC card close to reader', true);
+                            $cordovaSpinnerDialog.show(translate(gettext('Read Card')), translate(gettext('Please hold NFC card close to reader')), true);
                             transactionData.debitCard(data, amountToBeCharged, pin).then(function () {
                                 $cordovaSpinnerDialog.hide();
 
@@ -190,10 +192,12 @@ angular.module('talon.transaction')
 
         function TransactionCompleted(amount) {
             console.log('Finishing up' + amount);
-            alert('The transaction in the amount of ' + $filter('currency')(amount, $scope.country.CurrencyIsoCode + ' ') + ' has been completed.');
+            alert(translate(gettext('The transaction in the amount of'))
+             + ' ' + $filter('currency')(amount, $scope.country.CurrencyIsoCode + ' ')
+             + ' ' + translate(gettext('has been completed.')));
         }
     })
-    .controller('ConfirmationController', function PinController($scope, $location, $timeout) {
+.controller('ConfirmationController', function PinController($scope, $location, $timeout) {
         $scope.$watch('data', function () {
             if ($scope.data) {
                 $scope.total = $scope.data.card.current[0] +
@@ -220,7 +224,8 @@ angular.module('talon.transaction')
     })
 
 
-.controller('QRConfirmationController', function PinController($scope, $location, beneficiaryData, $timeout) {
+.controller('QRConfirmationController', function PinController($scope, $location, beneficiaryData, $timeout, gettext, $filter) {
+ var translate = $filter('translate');
     $scope.addVoucher = function () {
         var failFunction = function (error) {
             alert(error.message);
@@ -246,15 +251,16 @@ angular.module('talon.transaction')
 
                         var beneficiary = $scope.vouchers[0].beneficiary;;
                         if (moment.unix(voucher.validAfter) > moment()) {
-                            alert('Voucher can\'t be used before ' + moment.unix(voucher.validAfter).locale('en-Us').format('L') + '.');
+                            alert(translate(gettext('Voucher can\'t be used before')) +
+                                ' ' + moment.unix(voucher.validAfter).format('L') + '.');
                             return;
                         }
                         if (voucher.beneficiary.BeneficiaryId != beneficiary.BeneficiaryId) {
-                            alert('Voucher belongs to a different beneficiary.');
+                            alert(translate(gettext('Voucher belongs to a different beneficiary.')));
                             return;
                         }
                         if (currentCodes.indexOf(voucher.voucherCode) > -1) {
-                            alert('Voucher already added');
+                            alert(translate(gettext('Voucher already added')));
                             return;
                         }
 

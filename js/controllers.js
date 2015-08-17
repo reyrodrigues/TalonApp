@@ -78,6 +78,7 @@ angular.module('talon.controllers', [
             $rootScope.currentUser = $localStorage.currentUser;
             $rootScope.organization = $localStorage.currentUser.Organization;
             $rootScope.country = $localStorage.country;
+            $rootScope.currentLocale = $localStorage.country.LanguageCode || 'en';
         });
 
         $ionicPlatform.ready(function () {

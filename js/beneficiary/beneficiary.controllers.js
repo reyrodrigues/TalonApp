@@ -1,7 +1,8 @@
 angular.module('talon.beneficiary')
-    .controller('BeneficiaryController', function BeneficiaryController($scope, $localStorage, $ionicModal, $cordovaSpinnerDialog, beneficiaryData) {
+    .controller('BeneficiaryController', function BeneficiaryController($scope, $localStorage, $ionicModal, $cordovaSpinnerDialog, beneficiaryData, gettext, $filter) {
         $scope.reloadCard = reloadCard;
         $scope.readCard = readCard;
+        var translate = $filter('translate');
 
         function reloadCard() {
             var failFunction = function (error) {
@@ -10,7 +11,7 @@ angular.module('talon.beneficiary')
             };
 
             $scope.showPinModal().then(function (pin) {
-                $cordovaSpinnerDialog.show('Reload Card', 'Please hold NFC card close to reader', true);
+                $cordovaSpinnerDialog.show(translate(gettext('Reload Card')), translate(gettext('Please hold NFC card close to reader')), true);
                 beneficiaryData.reloadCard(pin).then(function () {
                     $cordovaSpinnerDialog.hide();
                 }).catch(failFunction);
@@ -23,7 +24,7 @@ angular.module('talon.beneficiary')
                 console.log(error);
                 $cordovaSpinnerDialog.hide();
             };
-            $cordovaSpinnerDialog.show('Read Card', 'Please hold NFC card close to reader', true);
+            $cordovaSpinnerDialog.show(translate(gettext('Read Card')), translate(gettext('Please hold NFC card close to reader')), true);
             beneficiaryData.readRawCardData().then(function (data) {
                 $scope.showPinModal().then(function (pin) {
                     beneficiaryData.readCardData(pin, data).then(function (info) {
@@ -57,8 +58,9 @@ angular.module('talon.beneficiary')
 
     })
     .controller('ViewBeneficiaryController', function ViewBeneficiaryController($scope, $localStorage, $q, $timeout, $http, $state,
-        talonRoot, beneficiaryData, $cordovaSpinnerDialog, $ionicModal) {
+        talonRoot, beneficiaryData, $cordovaSpinnerDialog, $ionicModal, gettext, $filter) {
         $scope.voucherBook = $scope.$new();
+        var translate = $filter('translate');
 
         beneficiaryData.fetchBeneficiaryById($state.params.id).then(function (beneficiaries) {
             $scope.beneficiary = beneficiaries;
@@ -108,7 +110,7 @@ angular.module('talon.beneficiary')
                 var beneficiaryId = $scope.beneficiary.Id;
 
                 $scope.showPinModal().then(function (pin) {
-                    $cordovaSpinnerDialog.show('PIN', 'Updating PIN.', true);
+                    $cordovaSpinnerDialog.show(translate(gettext('PIN')), translate(gettext('Updating PIN')), true);
                     beneficiaryData.setPin(beneficiaryId, pin).then(function () {
                         $cordovaSpinnerDialog.hide();
 
@@ -124,7 +126,7 @@ angular.module('talon.beneficiary')
                 };
 
                 var beneficiaryId = $scope.beneficiary.Id;
-                $cordovaSpinnerDialog.show('Read Card', 'Please hold NFC card close to reader', true);
+                $cordovaSpinnerDialog.show(translate(gettext('Read Card')), translate(gettext('Please hold NFC card close to reader')), true);
 
                 beneficiaryData.provisionBeneficiary(beneficiaryId).then(function () {
                     $cordovaSpinnerDialog.hide();

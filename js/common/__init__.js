@@ -3,7 +3,10 @@ angular.module('talon.common', [
     'ngCordova',
     'talon.constants',
     'pouchdb',
-]);
+    'gettext'
+])
+
+;
 
 if (DEBUG) {
     if (!window.plugins) {

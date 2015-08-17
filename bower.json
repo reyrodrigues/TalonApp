@@ -15,7 +15,8 @@
     "jszip": "Stuk/jszip#~2.5.0",
     "jszip-utils": "Stuk/jszip-utils#~0.0.2",
     "jquery": "~2.1.4",
-    "font-awesome": "~4.4.0"
+    "font-awesome": "~4.4.0",
+    "angular-gettext": "~2.1.0"
   },
   "resolutions": {
     "angular": "~1.4.1"

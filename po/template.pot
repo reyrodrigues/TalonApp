@@ -1,0 +1,301 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Project-Id-Version: \n"
+
+#: templates/pin-code.html:61
+#: templates/pos.html:56
+msgid "0"
+msgstr ""
+
+#: templates/pin-code.html:25
+#: templates/pos.html:20
+msgid "1"
+msgstr ""
+
+#: templates/pin-code.html:28
+#: templates/pos.html:23
+msgid "2"
+msgstr ""
+
+#: templates/pin-code.html:31
+#: templates/pos.html:26
+msgid "3"
+msgstr ""
+
+#: templates/pin-code.html:36
+#: templates/pos.html:31
+msgid "4"
+msgstr ""
+
+#: templates/pin-code.html:39
+#: templates/pos.html:34
+msgid "5"
+msgstr ""
+
+#: templates/pin-code.html:42
+#: templates/pos.html:37
+msgid "6"
+msgstr ""
+
+#: templates/pin-code.html:47
+#: templates/pos.html:42
+msgid "7"
+msgstr ""
+
+#: templates/pin-code.html:50
+#: templates/pos.html:45
+msgid "8"
+msgstr ""
+
+#: templates/pin-code.html:53
+#: templates/pos.html:48
+msgid "9"
+msgstr ""
+
+#: templates/assign-voucher-book.html:1
+#: templates/view-beneficiary.html:18
+msgid "Assign Voucher Book"
+msgstr ""
+
+#: templates/menu.html:24
+msgid "Beneficiary"
+msgstr ""
+
+#: js/beneficiary/beneficiary.services.js:39
+msgid "Beneficiary not registered"
+msgstr ""
+
+#: templates/assign-voucher-book.html:7
+#: templates/confirmation.html:25
+#: templates/qr-confirmation.html:20
+msgid "Cancel"
+msgstr ""
+
+#: templates/confirmation.html:16
+msgid "Card value after transaction"
+msgstr ""
+
+#: templates/qr-confirmation.html:10
+msgid "Code"
+msgstr ""
+
+#: templates/confirmation.html:3
+#: templates/qr-confirmation.html:3
+msgid "Confirmation"
+msgstr ""
+
+#: templates/settings.html:10
+msgid "Country"
+msgstr ""
+
+#: templates/assign-voucher-book.html:3
+msgid "Distribution"
+msgstr ""
+
+#: templates/sync.html:12
+msgid "Download Data From Server"
+msgstr ""
+
+#: templates/pin-code.html:5
+msgid "Enter Pin"
+msgstr ""
+
+#: js/transaction/transaction.controllers.js:151
+msgid "Invalid PIN."
+msgstr ""
+
+#: js/beneficiary/beneficiary.services.js:47
+msgid "Invalid pin."
+msgstr ""
+
+#: templates/login.html:17
+msgid "Invalid username or password."
+msgstr ""
+
+#: js/beneficiary/beneficiary.services.js:31
+msgid "Invalid voucher."
+msgstr ""
+
+#: templates/menu.html:32
+msgid "Invoices"
+msgstr ""
+
+#: templates/sync.html:9
+msgid "Last Synced On:"
+msgstr ""
+
+#: templates/view-beneficiary.html:10
+msgid "Location:"
+msgstr ""
+
+#: templates/login.html:21
+msgid "Log in"
+msgstr ""
+
+#: templates/login.html:3
+msgid "Login"
+msgstr ""
+
+#: templates/settings.html:14
+msgid "Logout"
+msgstr ""
+
+#: templates/view-beneficiary.html:7
+msgid "Mobile Number:"
+msgstr ""
+
+#: templates/view-beneficiary.html:4
+msgid "Name:"
+msgstr ""
+
+#: js/transaction/transaction.controllers.js:155
+msgid "Not enough credit"
+msgstr ""
+
+#: js/beneficiary/beneficiary.controllers.js:113
+msgid "PIN"
+msgstr ""
+
+#: templates/menu.html:20
+#: templates/pos.html:1
+msgid "POS Mode"
+msgstr ""
+
+#: templates/login.html:14
+#: templates/login.html:15
+msgid "Password"
+msgstr ""
+
+#: templates/confirmation.html:28
+msgid "Pay with card"
+msgstr ""
+
+#: templates/confirmation.html:13
+msgid "Pending card load value"
+msgstr ""
+
+#: js/beneficiary/beneficiary.controllers.js:129
+#: js/beneficiary/beneficiary.controllers.js:14
+#: js/beneficiary/beneficiary.controllers.js:27
+#: js/transaction/transaction.controllers.js:164
+#: js/transaction/transaction.controllers.js:177
+msgid "Please hold NFC card close to reader"
+msgstr ""
+
+#: templates/signature-pad.html:4
+msgid "Please sign below"
+msgstr ""
+
+#: templates/qr-confirmation.html:23
+msgid "Process transaction"
+msgstr ""
+
+#: templates/view-beneficiary.html:15
+msgid "Provision Card"
+msgstr ""
+
+#: js/beneficiary/beneficiary.controllers.js:129
+#: js/beneficiary/beneficiary.controllers.js:27
+#: js/transaction/transaction.controllers.js:164
+#: js/transaction/transaction.controllers.js:177
+msgid "Read Card"
+msgstr ""
+
+#: templates/menu.html:28
+msgid "Receipts"
+msgstr ""
+
+#: js/beneficiary/beneficiary.controllers.js:14
+msgid "Reload Card"
+msgstr ""
+
+#: templates/qr-confirmation.html:17
+msgid "Scan another voucher"
+msgstr ""
+
+#: templates/assign-voucher-book.html:10
+msgid "Scan first page"
+msgstr ""
+
+#: templates/list-beneficiaries.html:4
+msgid "Search"
+msgstr ""
+
+#: templates/list-beneficiaries.html:1
+msgid "Select Beneficiary"
+msgstr ""
+
+#: templates/view-beneficiary.html:12
+msgid "Set Pin"
+msgstr ""
+
+#: templates/menu.html:41
+#: templates/settings.html:1
+#: templates/settings.html:3
+msgid "Settings"
+msgstr ""
+
+#: templates/menu.html:36
+#: templates/sync.html:1
+msgid "Sync Data"
+msgstr ""
+
+#: js/transaction/transaction.controllers.js:196
+msgid "The transaction in the amount of"
+msgstr ""
+
+#: js/transaction/transaction.controllers.js:160
+msgid "There is no value to be charged."
+msgstr ""
+
+#: js/beneficiary/beneficiary.controllers.js:113
+msgid "Updating PIN"
+msgstr ""
+
+#: templates/login.html:10
+#: templates/login.html:11
+msgid "Username"
+msgstr ""
+
+#: templates/confirmation.html:7
+msgid "Value of this transaction"
+msgstr ""
+
+#: templates/qr-confirmation.html:13
+msgid "Value:"
+msgstr ""
+
+#: templates/view-beneficiary.html:1
+msgid "View Beneficiary"
+msgstr ""
+
+#: templates/qr-confirmation.html:7
+msgid "Voucher"
+msgstr ""
+
+#: js/transaction/transaction.controllers.js:262
+msgid "Voucher already added"
+msgstr ""
+
+#: js/transaction/transaction.controllers.js:258
+msgid "Voucher belongs to a different beneficiary."
+msgstr ""
+
+#: js/transaction/transaction.controllers.js:109
+#: js/transaction/transaction.controllers.js:253
+msgid "Voucher can't be used before"
+msgstr ""
+
+#: js/transaction/transaction.services.js:104
+#: js/transaction/transaction.services.js:57
+msgid "You are logged in as an administrator. The POS mode is available for demo use only. The transaction will not be completed."
+msgstr ""
+
+#: js/transaction/transaction.controllers.js:196
+msgid "has been completed."
+msgstr ""
+
+msgid "Unknown"
+msgstr ""

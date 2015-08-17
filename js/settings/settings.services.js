@@ -61,7 +61,7 @@ angular.module('talon.settings')
 
         function Sync() {
             var successFunction = function () {
-                $rootScope.lastSynced = moment().locale('en-US').format('LLL');
+                $rootScope.lastSynced = moment().format('LLL');
                 return true;
             }
 
