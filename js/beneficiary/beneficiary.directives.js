@@ -86,11 +86,11 @@ angular.module('talon.beneficiary')
             template: '<div id="signature-pad" style="height:60%; overflow: hidden;">' +
                 '</div>' +
                 '<div class="row">' +
-                '<div class="col"><button class="button button-assertive button-block" ng-click="closeDialog()">Cancel</button></div>' +
-                '<div class="col"><button class="button button-stable button-block" ng-click="clearSignature()">Clear</button></div>' +
+                '<div class="col"><button class="button button-assertive button-block" tln-click="closeDialog()">Cancel</button></div>' +
+                '<div class="col"><button class="button button-stable button-block" tln-click="clearSignature()">Clear</button></div>' +
                 '<div class="col"></div>' +
                 '<div class="col"></div>' +
-                '<div class="col"><button class="button button-positive button-block" ng-click="acceptSignature()">Accept</button></div>' +
+                '<div class="col"><button class="button button-positive button-block" tln-click="acceptSignature()">Accept</button></div>' +
                 '</div>'
         };
     })

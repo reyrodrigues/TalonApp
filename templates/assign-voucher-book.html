@@ -4,10 +4,10 @@
         <ion-radio ng-repeat="c in distributions" ng-value="c.id" ng-model="selectedDistributionId" ng-click="updateDistribution(c)">{{c.name}}</ion-radio>
         <div class="row">
             <div class="col col-33">
-                <button class="button button-assertive button-block" ng-click="cancel()" translate>Cancel</button>
+                <button class="button button-assertive button-block" tln-click="cancel()" translate>Cancel</button>
             </div>
             <div class="col col-67">
-                <button class="button button-positive button-block" ng-click="scan()" translate>Scan first page</button>
+                <button class="button button-positive button-block" tln-click="scan()" translate>Scan first page</button>
             </div>
         </div>
     </ion-content>

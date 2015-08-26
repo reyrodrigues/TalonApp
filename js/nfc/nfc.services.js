@@ -162,15 +162,19 @@ angular.module('talon.nfc')
 
 
                     if (!messages.length) {
-                        ndef.resolve({
-                            id: forge.util.bytesToHex(forge.random.getBytes(16)),
-                            data: '',
-                            atr: null
+                        $timeout(function () {
+                            ndef.resolve({
+                                id: forge.util.bytesToHex(forge.random.getBytes(16)),
+                                data: '',
+                                atr: null
+                            });
                         });
                     } else {
-                        ndef.resolve({
-                            id: messages[0].id || forge.util.bytesToHex(forge.random.getBytes(16)),
-                            data: messages[0].payload
+                        $timeout(function () {
+                            ndef.resolve({
+                                id: messages[0].id || forge.util.bytesToHex(forge.random.getBytes(16)),
+                                data: messages[0].payload
+                            });
                         });
                     }
                 });
@@ -310,6 +314,8 @@ angular.module('talon.nfc')
                     ];
 
                     nfc.write(message, function () {
+                        // it should be happening in the same thread up to here,
+                        // but the result needs to bubble up back into angular
                         $timeout(function () {
                             defn.resolve();
                         });

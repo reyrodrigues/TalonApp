@@ -30,7 +30,7 @@ angular.module('talon.transaction')
     })
     .controller('POSController', function POSController($scope, $ionicModal, $q, transactionData, beneficiaryData,
         $cordovaSpinnerDialog, $timeout, $filter, gettext) {
-         var translate = $filter('translate');
+        var translate = $filter('translate');
 
         $scope.decimalChar = '.';
         $scope.value = '';
@@ -173,11 +173,16 @@ angular.module('talon.transaction')
                             card: data,
                             value: amountToBeCharged
                         }, pin).then(function () {
-                            $cordovaSpinnerDialog.show(translate(gettext('Read Card')), translate(gettext('Please hold NFC card close to reader')), true);
+                            $cordovaSpinnerDialog.show(translate(gettext('Proccessing Transaction')), translate(gettext('Please wait')), true);
                             transactionData.debitCard(data, amountToBeCharged, pin).then(function () {
                                 $cordovaSpinnerDialog.hide();
 
                                 TransactionCompleted(amountToBeCharged);
+                            }, noCredits, function (arg) {
+                                if (arg === 'CARD') {
+                                    $cordovaSpinnerDialog.hide();
+                                    $cordovaSpinnerDialog.show(translate(gettext('Read Card')), translate(gettext('Please hold NFC card close to reader')), true);
+                                }
                             }).catch(noCredits);
                         })
                     }).catch(invalidCardOrPin);
@@ -192,12 +197,10 @@ angular.module('talon.transaction')
 
         function TransactionCompleted(amount) {
             console.log('Finishing up' + amount);
-            alert(translate(gettext('The transaction in the amount of'))
-             + ' ' + $filter('currency')(amount, $scope.country.CurrencyIsoCode + ' ')
-             + ' ' + translate(gettext('has been completed.')));
+            alert(translate(gettext('The transaction in the amount of')) + ' ' + $filter('currency')(amount, $scope.country.CurrencyIsoCode + ' ') + ' ' + translate(gettext('has been completed.')));
         }
     })
-.controller('ConfirmationController', function PinController($scope, $location, $timeout) {
+    .controller('ConfirmationController', function PinController($scope, $location, $timeout) {
         $scope.$watch('data', function () {
             if ($scope.data) {
                 $scope.total = $scope.data.card.current[0] +
@@ -225,7 +228,7 @@ angular.module('talon.transaction')
 
 
 .controller('QRConfirmationController', function PinController($scope, $location, beneficiaryData, $timeout, gettext, $filter) {
- var translate = $filter('translate');
+    var translate = $filter('translate');
     $scope.addVoucher = function () {
         var failFunction = function (error) {
             alert(error.message);

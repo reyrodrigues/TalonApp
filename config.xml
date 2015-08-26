@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<widget id="com.ionicframework.talon791206" version="0.0.1" xmlns:cdv="http://cordova.apache.org/ns/1.0" xmlns="http://www.w3.org/ns/widgets">
-    <name>talon</name>
+<widget id="org.rescue.talon" version="0.0.1" xmlns:cdv="http://cordova.apache.org/ns/1.0" xmlns="http://www.w3.org/ns/widgets">
+    <name>Talon</name>
     <description>
-        An Ionic Framework and Cordova project.
+        Eletronic voucher payment procesor
     </description>
-    <author email="hi@ionicframework" href="http://ionicframework.com/">
-        Ionic Framework Team
+    <author email="reynaldo.rodrigues@rescue.org" href="http://Rescue.org/">
+        The International Rescue Committee
     </author>
     <content src="index.html"/>
     <access origin="https://talon.rescue.org/"/>

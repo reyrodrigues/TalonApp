@@ -45,7 +45,6 @@
     },
     "cordova-plugin-geolocation",
     "cordova-plugin-dialogs",
-    "com.chariotsolutions.nfc.plugin",
     {
       "locator": "../../plugin",
       "id": "org.rescue.nfcCardPlugin"
@@ -56,11 +55,12 @@
     {
       "locator": "../../cordova-HTTP",
       "id": "com.synconset.cordovaHTTP"
-    }
+    },
+    "com.chariotsolutions.nfc.plugin"
   ],
   "cordovaPlatforms": [
-    "ios",
     "android",
+    "ios",
     {
       "platform": "android",
       "version": "",

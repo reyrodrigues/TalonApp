@@ -53,9 +53,8 @@ angular.module('talon', ['ionic',
 
         if (window.nfc) {
             window.nfc.addNdefListener(function (event) {
-                $timeout(function () {
-                    $rootScope.$broadcast('nfc:foundTag', event.tag);
-                });
+                // Writes need to happen as the event is fired
+                $rootScope.$broadcast('nfc:foundTag', event.tag);
             });
 
             window.nfc.addNdefFormatableListener(function (e, tag) {
@@ -154,5 +153,13 @@ angular.module('talon', ['ionic',
     // if none of the above states are matched, use this as the fallback
     $urlRouterProvider.otherwise('/app/pos');
 })
-
+.directive('tlnClick', function() {
+    return function(scope, element, attrs) {
+        element.bind('touchstart click', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            scope.$apply(attrs['tlnClick']);
+        });
+    };
+});
 ;

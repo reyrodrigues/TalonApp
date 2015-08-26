@@ -72,6 +72,7 @@ angular.module('talon.transaction')
                 }
 
                 $timeout(function () {
+                 def.notify('CARD');
                     beneficiaryData.updateCardData(payload, beneficiary.CardKey, pin, beneficiary.CardId).then(function (update) {
                         processTransaction({
                             type: 2,
@@ -84,7 +85,7 @@ angular.module('talon.transaction')
                             def.resolve();
                         }).catch(failFunction);
                     }).catch(failFunction);
-                }, 500);
+                }, 100);
             }).catch(failFunction);
 
             return def.promise
