@@ -45,18 +45,18 @@
     },
     "cordova-plugin-geolocation",
     "cordova-plugin-dialogs",
-    {
-      "locator": "../../plugin",
-      "id": "org.rescue.nfcCardPlugin"
-    },
     "cordova-plugin-screen-orientation",
     "io.litehelpers.cordova.sqlite",
     "phonegap-plugin-barcodescanner",
+    "com.chariotsolutions.nfc.plugin",
     {
-      "locator": "../../cordova-HTTP",
+      "locator": "https://github.com/reyrodrigues/cordova-HTTP",
       "id": "com.synconset.cordovaHTTP"
     },
-    "com.chariotsolutions.nfc.plugin"
+    {
+      "locator": "https://github.com/reyrodrigues/org.rescue.nfcTools",
+      "id": "org.rescue.nfcCardPlugin"
+    }
   ],
   "cordovaPlatforms": [
     "android",
