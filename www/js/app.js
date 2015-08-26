@@ -1,3 +1,1235 @@
-angular.module("talon",["ionic","talon.constants","talon.controllers","talon.templates","talon.auth","talon.beneficiary","talon.common","talon.nfc","talon.transaction","gettext"]).run(["$ionicPlatform","$rootScope","$timeout","$localStorage","gettextCatalog","$ionicHistory",function(e,n,t,o,r,a){n.$watch("currentLocale",function(){r.setCurrentLanguage(n.currentLocale),moment.locale(n.currentLocale);var e=["ar","he"];n.currentDirection=e.indexOf(n.currentLocale)>-1?"right":"left"}),n.currentLocale="en",o.currentUser&&(n.currentUser=o.currentUser,n.organization=o.currentUser.Organization,n.country=o.country,n.currentLocale=o.country.LanguageCode||"en"),e.ready(function(){window.cordova&&window.cordova.plugins.Keyboard&&cordova.plugins.Keyboard.hideKeyboardAccessoryBar(!0),window.StatusBar&&StatusBar.styleLightContent(),window.screen&&window.screen.lockOrientation&&screen.lockOrientation("portrait"),window.nfc&&(window.nfc.addNdefListener(function(e){n.$broadcast("nfc:foundTag",e.tag)}),window.nfc.addNdefFormatableListener(function(e,n){var t=[window.ndef.record(window.ndef.TNF_EXTERNAL_TYPE,util.stringToBytes("application/talon"),util.stringToBytes(forge.util.bytesToHex(forge.random.getBytes(16))),util.stringToBytes(""))];window.nfc.write(t)}))})}]).config(["$stateProvider","$urlRouterProvider","$httpProvider",function(e,n,t){t.interceptors.push("authInterceptor"),e.state("app",{url:"/app","abstract":!0,templateUrl:"templates/menu.html"}).state("app.pos",{url:"/pos",views:{menuContent:{templateUrl:"templates/pos.html"}}}).state("app.beneficiary",{url:"/beneficiary",views:{menuContent:{templateUrl:"templates/list-beneficiaries.html"}}}).state("app.view-beneficiary",{url:"/view-beneficiary/:id",views:{menuContent:{templateUrl:"templates/view-beneficiary.html"}}}).state("app.receipts",{url:"/receipts",views:{menuContent:{templateUrl:"templates/blank.html"}}}).state("app.invoices",{url:"/invoices",views:{menuContent:{templateUrl:"templates/blank.html"}}}).state("app.sync",{url:"/sync",views:{menuContent:{templateUrl:"templates/sync.html"}}}).state("app.settings",{url:"/settings",views:{menuContent:{templateUrl:"templates/settings.html"}}}),n.otherwise("/app/pos")}]).directive("tlnClick",function(){return function(e,n,t){n.bind("touchstart click",function(n){n.preventDefault(),n.stopPropagation(),e.$apply(t.tlnClick)})}}),angular.module("talon.constants",[]).constant("talonRoot","https://talon.rescue.org/"),angular.module("talon.controllers",["ngStorage","talon.templates","talon.auth","talon.beneficiary","talon.common","talon.nfc","talon.transaction","ngCordova"]).controller("AppController",["$scope","beneficiaryData","$timeout","$rootScope","$cordovaGeolocation","$ionicPlatform","$nfcTools","$localStorage","$ionicModal","$q","$cordovaSpinnerDialog","adminAuthentication","$nfcTools","$settings","$interval",function(e,n,t,o,r,a,i,c,u,d,l,s,i,f,p){function h(){}function g(){return e.pin.deferred=d.defer(),e.pin.passcode="",e.login.modal&&e.pin.modal.show(),e.pin.deferred.promise}function v(n,t){return e.confirmation.deferred=d.defer(),e.confirmation.data=n,e.confirmation.pin=t,e.confirmation.modal&&e.confirmation.modal.show(),e.confirmation.deferred.promise}function m(n,t){return e.qrConfirmation.deferred=d.defer(),e.qrConfirmation.vouchers=[n],e.qrConfirmation.pin=t,e.qrConfirmation.modal&&e.qrConfirmation.modal.show(),e.qrConfirmation.deferred.promise}function y(){return e.signature.deferred=d.defer(),window.screen&&screen.lockOrientation&&screen.lockOrientation("landscape"),e.signature.modal&&(e.signature.modal.show(),e.signature.isOpen=!0),e.signature.deferred.promise}function w(){return e.login.deferred=d.defer(),delete c.authorizationData,delete o.authorizationData,delete c.currentUser,delete o.currentUser,delete c.organization,delete o.organization,delete c.country,delete o.country,e.login.modal&&e.login.modal.show(),e.login.deferred.promise}e.pin=e.$new(),e.login=e.$new(),e.confirmation=e.$new(),e.qrConfirmation=e.$new(),e.signature=e.$new(),o.device={},u.fromTemplateUrl("templates/login.html",{scope:e.login,focusFirstInput:!0,backdropClickToClose:!1,hardwareBackButtonClose:!1}).then(function(n){e.login.modal=n}),u.fromTemplateUrl("templates/confirmation.html",{scope:e.confirmation,backdropClickToClose:!1}).then(function(n){e.confirmation.modal=n}),u.fromTemplateUrl("templates/qr-confirmation.html",{scope:e.qrConfirmation,backdropClickToClose:!1}).then(function(n){e.qrConfirmation.modal=n}),u.fromTemplateUrl("templates/pin-code.html",{scope:e.pin}).then(function(n){e.pin.modal=n}),u.fromTemplateUrl("templates/signature-pad.html",{scope:e.signature}).then(function(n){e.signature.modal=n,e.signature.isOpen=!1}),c.authorizationData?(o.authorizationData=c.authorizationData,2!=c.authorizationData.tokenType||o.currentUser||s.loadUserData()):e.login.$watch("modal",function(){e.login.modal&&w().then(function(){})}),a.ready(h),o.$on("onResumeCordova",h),a.on("resume",function(){o.currentUser=c.currentUser,o.organization=c.currentUser.Organization,o.country=c.country,o.currentLocale=c.country.LanguageCode||"en"}),a.ready(function(){var e={timeout:1e4,enableHighAccuracy:!1};r.getCurrentPosition(e).then(function(e){o.currentLocation=e.coords},function(e){})}),e.showPinModal=g,e.showLoginModal=w,e.showConfirmationModal=v,e.showSignaturePad=y,e.showQRConfirmationModal=m,p(function(){f.sync()},12e4)}]),angular.module("gettext").run(["gettextCatalog",function(e){e.setStrings("ar",{0:"0",1:"1",2:"2",3:"3",4:"4",5:"5",6:"6",7:"7",8:"8",9:"9","Assign Voucher Book":"تعيين كتاب الإيصال",Beneficiary:"المستفيد","Beneficiary not registered":"المستفيد غير مسجلة",Cancel:"إلغاء","Card value after transaction":"قيمة بطاقة بعد الحركة",Code:"الكود",Confirmation:"تأكيد",Country:"الدولة",Distribution:"توزيع","Download Data From Server":"تحميل البيانات من الملقم","Enter Pin":"إدخال الرمز السري","Invalid PIN.":"غير صالح","Invalid pin.":"غير صالح","Invalid username or password.":"هناك خطا في اسم المستخدم او كلمة المرور","Invalid voucher.":"قسيمة غير صالحة",Invoices:"الفواتير","Last Synced On:":"مزامن آخر على:","Location:":"الموقع الجغرافي:","Log in":"تسجيل الدخول",Login:"تسجيل الدخول",Logout:"تسجيل خروج","Mobile Number:":"رقم الجوال","Name:":"الاسم:","Not enough credit":"الائتمان غير كافية",PIN:"ثبت","POS Mode":"نقطة البيع	",Password:"كلمة السر","Pay with card":"الدفع بواسطة بطاقة","Pending card load value":"قيمة تحميل بطاقة معلقة","Please hold NFC card close to reader":"يرجى إجراء بطاقة نفك قريبة من القارئ","Please sign below":"الرجاء التوقيع أدناه","Process transaction":"الحركة عملية","Provision Card":"بطاقة الاعتماد","Read Card":"بطاقة القراءة",Receipts:"الإيصالات","Reload Card":"أعادة التحميل","Scan another voucher":"مسح آخر قسيمة","Scan first page":"مسح الصفحة الأولى",Search:"بحث","Select Beneficiary":"حدد المستفيد","Set Pin":"تعيين رقم التعريف الشخصي",Settings:"إعدادات","Sync Data":"مزامنة البيانات","The transaction in the amount of":"الحركة في مبلغ من","There is no value to be charged.":"لا توجد قيمة تكون مكلفة.","Updating PIN":"تحديث PIN",Username:"المستخدم","Value of this transaction":"قيمة هذه الصفقة","Value:":"اسم القيمة:","View Beneficiary":"رأي المستفيدين",Voucher:"قسيمة شراء","Voucher already added":"الإيصال بالفعل بإضافة","Voucher belongs to a different beneficiary.":"قسيمة ينتمي إلى مستفيد آخر.","Voucher can't be used before":"لا يمكن استخدام القسيمة قبل","You are logged in as an administrator. The POS mode is available for demo use only. The transaction will not be completed.":"دخولك كمسؤول. وضع نقاط البيع متاح للاستخدام التجريبي فقط. لن تكتمل الصفقة.","has been completed.":"قد اكتمل.",Unknown:"غير معروف"}),e.setStrings("en",{0:"0",1:"1",2:"2",3:"3",4:"4",5:"5",6:"6",7:"7",8:"8",9:"9","Assign Voucher Book":"Assign Voucher Book",Beneficiary:"Beneficiary","Beneficiary not registered":"Beneficiary not registered",Cancel:"Cancel","Card value after transaction":"Card value after transaction",Code:"Code",Confirmation:"Confirmation",Country:"Country",Distribution:"Distribution","Download Data From Server":"Download Data From Server","Enter Pin":"Enter Pin","Invalid PIN.":"Invalid PIN.","Invalid pin.":"Invalid pin.","Invalid username or password.":"Invalid username or password.","Invalid voucher.":"Invalid voucher.",Invoices:"Invoices","Last Synced On:":"Last Synced On:","Location:":"Location:","Log in":"Log in",Login:"Login",Logout:"Logout","Mobile Number:":"Mobile Number:","Name:":"Name:","Not enough credit":"Not enough credit",PIN:"PIN","POS Mode":"POS Mode",Password:"Password","Pay with card":"Pay with card","Pending card load value":"Pending card load value","Please hold NFC card close to reader":"Please hold NFC card close to reader","Please sign below":"Please sign below","Process transaction":"Process transaction","Provision Card":"Provision Card","Read Card":"Read Card",Receipts:"Receipts","Reload Card":"Reload Card","Scan another voucher":"Scan another voucher","Scan first page":"Scan first page",Search:"Search","Select Beneficiary":"Select Beneficiary","Set Pin":"Set Pin",Settings:"Settings","Sync Data":"Sync Data","The transaction in the amount of":"The transaction in the amount of","There is no value to be charged.":"There is no value to be charged.","Updating PIN":"Updating PIN",Username:"Username","Value of this transaction":"Value of this transaction","Value:":"Value:","View Beneficiary":"View Beneficiary",Voucher:"Voucher","Voucher already added":"Voucher already added","Voucher belongs to a different beneficiary.":"Voucher belongs to a different beneficiary.","Voucher can't be used before":"Voucher can't be used before","You are logged in as an administrator. The POS mode is available for demo use only. The transaction will not be completed.":"You are logged in as an administrator. The POS mode is available for demo use only. The transaction will not be completed.","has been completed.":"has been completed.",Unknown:"Unknown"}),e.setStrings("pt",{0:"0",1:"1",2:"2",3:"3",4:"4",5:"5",6:"6",7:"7",8:"8",9:"9","Assign Voucher Book":"Associar Livro de Cupoms",Beneficiary:"Beneficiário","Beneficiary not registered":"Beneficiário não registrado",Cancel:"Cancelar","Card value after transaction":"Valor do cartão após a transação",Code:"Código",Confirmation:"Confirmar",Country:"País",Distribution:"Distribuição","Download Data From Server":"Baixar dados do servidor","Enter Pin":"Entre PIN","Invalid PIN.":"PIN inválido.","Invalid pin.":"PIN inválido.","Invalid username or password.":"Usuário ou senha inválidos.","Invalid voucher.":"Cupom inválido.",Invoices:"Faturas","Last Synced On:":"Última sincronização em:","Location:":"Localização:","Log in":"Entrar",Login:"Entrar",Logout:"Sair","Mobile Number:":"Numero do celular","Name:":"Nome","Not enough credit":"Não há credito suficiente",PIN:"PIN","POS Mode":"Modo PDV",Password:"Senha","Pay with card":"Pagar com cartão","Pending card load value":"Carga do cartão pendente","Please hold NFC card close to reader":"Por favor segure o cartão NFC contra o leitor","Please sign below":"Por favor assine abaixo","Process transaction":"Processar transação","Provision Card":"Configurar cartao","Read Card":"Ler cartão",Receipts:"Recibos","Reload Card":"Recarregar cartão","Scan another voucher":"Escanear outro cupom","Scan first page":"Escanear primeira página",Search:"Buscar","Select Beneficiary":"Selecione Beneficiário ","Set Pin":"Escolher PIN",Settings:"Configurações ","Sync Data":"Sincronizar dados","The transaction in the amount of":"A transação no valor de","There is no value to be charged.":"Não há valor a ser cobrado.","Updating PIN":"Atualizando PIN",Username:"Usuário","Value of this transaction":"Valor dessa transação","Value:":"Valor:","View Beneficiary":"Ver beneficiário",Voucher:"Cupom","Voucher already added":"Cupom já foi associado","Voucher belongs to a different beneficiary.":"Cupom pertence a outro beneficiário","Voucher can't be used before":"Este cupom não pode ser usado antes","You are logged in as an administrator. The POS mode is available for demo use only. The transaction will not be completed.":"Você esta logado como um administrador. O modo PDV só é disponível para demonstrações. Essa transação não será completada. ","has been completed.":"foi completada",Unknown:"Desconhecido"})}]),angular.module("talon.auth",["ngStorage","ngCordova","talon.constants","pouchdb","gettext"]),angular.module("talon.auth").controller("LoginController",["$scope","$ionicHistory","$state","$rootScope","$localStorage","vendorAuthentication","adminAuthentication",function(e,n,t,o,r,a,i){e.loginData={},e.wrongPassword=!1,e.loginAdmin=function(){i.login(e.loginData.username,e.loginData.password).then(function(){o.authorizationData=r.authorizationData,i.loadUserData().then(function(){e.deferred.resolve(),e.modal.hide(),e.wrongPassword=!1,e.loginData={}})})["catch"](function(){e.wrongPassword=!0})},e.loginVendor=function(){a.login(e.loginData.username,e.loginData.password).then(function(){e.deferred.resolve(),e.modal.hide(),e.wrongPassword=!1,e.loginData={},o.authorizationData=r.authorizationData})["catch"](function(){e.wrongPassword=!0})}}]),angular.module("talon.auth").factory("authInterceptor",["$q","$injector","$location","$localStorage",function(e,n,t,o,r){var a={},i=function(e){e.headers=e.headers||{};var n=o.authorizationData;if(n&&(e.headers.Authorization=(1==o.authorizationData.tokenType?"Token ":"Bearer ")+n.token),o.currentUser){if(o.authorizationData&&2==o.authorizationData.tokenType&&o.currentUser.Organization){var t=o.currentUser.Organization.Id;e.headers["X-Tenant-Organization"]=t}if(o.authorizationData&&1==o.authorizationData.tokenType){o.currentUser.Id}if(o.country){var r=o.country.Id;e.headers["X-Tenant-Country"]=r}}return e},c=function(n){return 401===n.status,e.reject(n)};return a.request=i,a.responseError=c,a}]),angular.module("talon.auth").service("adminAuthentication",["$http","$localStorage","$q","$rootScope","talonRoot","$cordovaDevice",function(e,n,t,o,r,a){function i(o,r){var a="grant_type=password&username="+o+"&password="+r,i=t.defer();return e.post(d+"token",a,{headers:{"Content-Type":"application/x-www-form-urlencoded"}}).success(function(e){n.authorizationData={token:e.access_token,userName:o,uuid:l.UUID||l.uuid,tokenType:2},i.resolve(!0)}).error(function(e,n){c(),i.reject(!1)}),i.promise}function c(){}function u(){var r=t.defer();if(n.currentUser){o.currentUser=n.currentUser,o.organization=o.currentUser.Organization;var a=o.currentUser.Countries.map(function(e){return e.Country});n.country||(n.country=a[0]),o.country=n.country,o.currentLocale=n.country.LanguageCode||"en",o.availableCountries=o.currentUser.Countries.length>1?a:!1,r.resolve()}else e.get(d+"api/ApplicationUser/Me").then(function(e){o.currentUser=e.data,n.currentUser=e.data,o.organization=o.currentUser.Organization,n.organization=o.currentUser.Organization;var t=o.currentUser.Countries.map(function(e){return e.Country});n.country||(n.country=t[0]),o.country=n.country,o.currentLocale=n.country.LanguageCode||"en",o.availableCountries=o.currentUser.Countries.length>1?t:!1,r.resolve()})["catch"](function(e){r.reject(e)});return r.promise}var d=r,l={};return window.device?l=a.getDevice():l.uuid="00:00:00:00",{login:i,logOut:c,loadUserData:u}}]).service("vendorAuthentication",["$http","$q","talonRoot","$cordovaDevice","$localStorage","$rootScope",function(e,n,t,o,r,a){function i(a,i){var u={};window.device?u=o.getDevice():u.uuid="00:00:00:00";var d={UserName:a,Password:i,Device:u},l=n.defer();return e.post(t+"api/App/VendorProfile/Login",d).then(function(e){200==e.status?(r.authorizationData={userName:d.UserName,token:e.data.token,uuid:u.UUID||u.uuid,tokenType:1},c(e.data.id).then(function(){l.resolve(r.authorizationData)})):l.reject(e.data)})["catch"](function(e,n){l.reject(e)}),l.promise}function c(o){var i=n.defer();return r.currentUser?(a.currentUser=r.currentUser,r.country=a.currentUser.Country,a.country=r.country,a.currentLocale=r.country.LanguageCode||"en",i.resolve()):e.get(t+"api/App/VendorProfile/LoadProfile").then(function(e){a.currentUser=e.data,r.currentUser=e.data,r.country||(r.country=a.currentUser.Country),a.country=r.country,a.currentLocale=r.country.LanguageCode||"en",i.resolve()})["catch"](function(e){i.reject(e)}),i.promise}var u={login:i};return u}]),angular.module("talon.beneficiary",["ngStorage","ngCordova","talon.constants","pouchdb","talon.nfc","talon.common","gettext"]),angular.module("talon.beneficiary").controller("BeneficiaryController",["$scope","$localStorage","$ionicModal","$cordovaSpinnerDialog","beneficiaryData","gettext","$filter",function(e,n,t,o,r,a,i){function c(){var n=function(e){o.hide()};e.showPinModal().then(function(e){o.show(d(a("Reload Card")),d(a("Please hold NFC card close to reader")),!0),r.reloadCard(e).then(function(){o.hide()})["catch"](n)})["catch"](n)}function u(){var n=function(e){o.hide()};o.show(d(a("Read Card")),d(a("Please hold NFC card close to reader")),!0),r.readRawCardData().then(function(t){e.showPinModal().then(function(a){r.readCardData(a,t).then(function(n){e.cardInfo=n,o.hide()})["catch"](n)})["catch"](n)})["catch"](n)}e.reloadCard=c,e.readCard=u;var d=i("translate")}]).controller("ListBeneficiaryController",["$scope","$localStorage","$q","$timeout","$http","beneficiaryData",function(e,n,t,o,r,a){function i(n){return c&&o.cancel(c),c=o(function(){a.listBeneficiariesByName(n).then(function(n){e.beneficiaries=n}),c=null},500)}e.beneficiaries=[],e.beneficiariesByName=i;var c=null}]).controller("ViewBeneficiaryController",["$scope","$localStorage","$q","$timeout","$http","$state","talonRoot","beneficiaryData","$cordovaSpinnerDialog","$ionicModal","gettext","$filter",function(e,n,t,o,r,a,i,c,u,d,l,s){e.voucherBook=e.$new();var f=s("translate");c.fetchBeneficiaryById(a.params.id).then(function(n){e.beneficiary=n,e.voucherBook.scan=function(){var n=function(e){};window.cordova&&window.cordova.plugins&&window.cordova.plugins.barcodeScanner&&cordova.plugins.barcodeScanner.scan(function(t){o(function(){var o=t.text;t.cancelled||c.assignVoucherBook(e.beneficiary.Id,e.voucherBook.selectedDistributionId,o).then(function(){e.voucherBook.modal.hide()})["catch"](n)})},n)},e.voucherBook.updateDistribution=function(n){e.voucherBook.selectedDistributionId=n.id},e.voucherBook.cancel=function(){e.voucherBook.modal.hide()},e.setPin=function(){var n=function(e){},t=e.beneficiary.Id;e.showPinModal().then(function(e){u.show(f(l("PIN")),f(l("Updating PIN")),!0),c.setPin(t,e).then(function(){u.hide()})["catch"](n)})["catch"](n)},e.provisionCard=function(){var n=function(e){u.hide()},t=e.beneficiary.Id;u.show(f(l("Read Card")),f(l("Please hold NFC card close to reader")),!0),c.provisionBeneficiary(t).then(function(){u.hide()})["catch"](n)},e.assignVoucherBook=function(){d.fromTemplateUrl("templates/assign-voucher-book.html",{scope:e.voucherBook}).then(function(n){e.voucherBook.modal=n,e.voucherBook.modal.show(),c.listDistributions(e.beneficiary.Id).then(function(n){e.voucherBook.distributions=n,e.voucherBook.selectedDistributionId=null})})}})}]),angular.module("talon.beneficiary").directive("ionSearch",function(){return{restrict:"E",replace:!0,scope:{getData:"&source",model:"=?",search:"=?filter"},link:function(e,n,t){t.minLength=t.minLength||0,e.placeholder=t.placeholder||"",e.search={value:""},t["class"]&&n.addClass(t["class"]),t.source&&e.$watch("search.value",function(n,o){n.length>t.minLength?e.getData({str:n}).then(function(n){e.model=n}):e.model=[]}),e.clearSearch=function(){e.search.value=""}},template:'<div class="item-input-wrapper"><i class="icon ion-android-search"></i><input type="search" placeholder="{{placeholder}}" ng-model="search.value"><i ng-if="search.value.length > 0" ng-click="clearSearch()" class="icon ion-close"></i></div>'}}).directive("signaturePad",["$timeout",function(e){return{restrict:"E",scope:{model:"=",cancelled:"=",accepted:"=",isOpen:"="},link:function(e,n,t){e.acceptSignature=function(){e.accepted&&e.accepted($("#signature-pad",n).jSignature("getData","svgbase64"))},e.closeDialog=function(){e.cancelled&&e.cancelled()},e.clearSignature=function(){$("#signature-pad",n).jSignature("reset")};var o=!1;e.$watch("isOpen",function(){e.isOpen&&(o||($("#signature-pad").jSignature(),o=!0),0==$("#signature-pad",n).children().length&&$("#signature-pad",n).jSignature("reset"))})},template:'<div id="signature-pad" style="height:60%; overflow: hidden;"></div><div class="row"><div class="col"><button class="button button-assertive button-block" tln-click="closeDialog()">Cancel</button></div><div class="col"><button class="button button-stable button-block" tln-click="clearSignature()">Clear</button></div><div class="col"></div><div class="col"></div><div class="col"><button class="button button-positive button-block" tln-click="acceptSignature()">Accept</button></div></div>'}}]),angular.module("talon.beneficiary").service("beneficiaryData",["$http","$localStorage","keyDB","cardLoadDB","$q","talonRoot","qrCodeDB","$nfcTools","$ionicPlatform","$timeout","$cordovaFile","$cordovaFileTransfer","httpUtils","encryption","$state","gettext","$filter",function(e,n,t,o,r,a,i,c,u,d,l,s,f,p,h,g,v){function m(e,n){return i.find(function(n){return n.VoucherCode==e}).then(function(e){var o=e;if(0==o.length)throw new Error(k(g("Invalid voucher.")));var r=o[0];return t.find(function(e){return e.BeneficiaryId==r.BeneficiaryId}).then(function(e){if(0==e.length)throw new Error(k(g("Beneficiary not registered")));var t=e[0],o=forge.util.decode64(r.Payload),a=p.decrypt(o,n,t.CardKey);if(!a)throw new Error(k(g("Invalid pin.")));var i=a.split("|"),c=parseFloat(i[1],10),u=parseInt(i[2],16),d=i[3];return{value:c,validAfter:u,voucherCode:d,beneficiary:t}})})}function y(n){var o=r.defer();return c.readId().then(function(r){e.post(a+"api/App/MobileClient/ProvisionBeneficiary",{beneficiaryId:n,cardId:r}).then(function(n){var r=n.data;t.upsert(r._id,r),e.get(a+"api/App/MobileClient/GenerateInitialLoad?beneficiaryId="+r.BeneficiaryId).then(function(e){var n=e.data;n=forge.util.bytesToHex(forge.util.decode64(n)),c.writeData(n,r.CardId).then(o.resolve.bind(o))})})})["catch"](function(){o.reject()}),o.promise}function w(n,t){return e.post(a+"api/App/MobileClient/SetBeneficiaryPin",{beneficiaryId:n,pin:t}).then(function(e){})}function C(n,t,o){return e.post(a+"api/App/MobileClient/AssignVoucherBook",{beneficiaryId:n,distributionId:t,serialNumber:o}).then(function(e){})}function b(n){return e.get(a+"api/App/MobileClient/ListDistributionsForBeneficiary?beneficiaryId="+n).then(function(e){return e.data})}function D(){var e=r.defer(),n=!1,t=d(function(){n||(n=!0,e.reject())},15e3);return c.readIdAndData().then(function(o){n||(d.cancel(t),e.resolve(o),n=!0)}),e.promise}function B(e,n){var t=null;return t=r.when(n?n:D()),t.then(function(n){return T(n.id).then(function(t){return I(n.data,t.CardKey,e).then(function(e){return{beneficiary:t,payload:e}})})})}function $(e){var n=r.defer(),t=function(e){n.reject(e)};return S(e).then(function(o){var r=o.pending,a=o.card.payload,i=o.card.beneficiary,c=a[0];if(0==r[0])return void n.resolve();var u="1933|"+(r[0]+c)+"|"+r[1].unix().toString(16);d(function(){P(u,i.CardKey,e,i.CardId).then(function(e){n.resolve()})["catch"](t)},500)})["catch"](t),n.promise}function S(e,n){var t=r.defer(),a=function(e){t.reject(e)},i=r.defer();return n?i.resolve(n):B(e).then(i.resolve.bind(i)),i.promise.then(function(n){{var r=n.payload,i=n.beneficiary,c=moment.unix(r[1]);r[0]}o.find(function(e){return e.CardId==i.CardId}).then(function(o){0==o.length&&t.resolve({pending:[0,0],card:n});var r=o[0].Load,a=r.map(function(n){var t=forge.util.decode64(n),o=p.decrypt(t,e,i.CardKey);if(!o)throw new Error;var r=o.split("|");return[parseFloat(r[1],10),moment.unix(parseInt(r[2],16))]}),u=a.filter(function(e){return e[1]>c}).reduce(function(e,n){return[e[0]+n[0],e[1]>n[1]?e[1]:n[1]]},[0,0]);t.resolve(0==u[0]&&0==u[1]?{pending:[0,0],card:n}:{pending:u,card:n})})["catch"](a)})["catch"](a),t.promise}function P(e,n,t,o){var a=p.encrypt(e,t,n),i=forge.util.createBuffer(forge.util.decode64(a),"raw").toHex(),u=r.defer();return c.writeData(i,o).then(function(e){u.resolve(e)}),u.promise}function I(e,n,t){var o=r.defer(),a=e.indexOf("0000");a%2==1&&(a+=1);var i=a>-1?e.substring(0,a):e,c=forge.util.hexToBytes(i),u=p.decrypt(c,t,n);if(!u)return o.reject(),o.promise;var d=u.split("|"),l=[parseFloat(d[1],10),parseInt(d[2],16)];return o.resolve(l),o.promise}function T(e){var n=r.defer();return t.find(function(n){return n.CardId==e}).then(function(e){e.length&&n.resolve(e[0]),n.reject()}),n.promise}function L(n){var t="$filter=startswith(tolower(FirstName), '"+encodeURIComponent(n.toLowerCase())+"') or startswith(tolower(LastName), '"+encodeURIComponent(n.toLowerCase())+"')";return e.get(a+"Breeze/EVM/Beneficiaries?"+t).then(function(e){return e.data})}function U(n){return e.get(a+"Breeze/EVM/Beneficiaries?$expand=Location&$filter=Id eq "+h.params.id).then(function(e){return e.data[0]})}var k=v("translate");return{reloadCard:$,readCardData:B,readRawCardData:D,updateCardData:P,provisionBeneficiary:y,listBeneficiariesByName:L,fetchBeneficiaryById:U,fetchPendingLoads:S,validateQRCode:m,setPin:w,listDistributions:b,assignVoucherBook:C}}]),angular.module("talon.common",["ngStorage","ngCordova","talon.constants","pouchdb","gettext"]),angular.module("talon.common").controller("SignaturePadController",["$scope",function(e){e.closeDialog=function(){e.modal.hide(),e.isOpen=!1,window.screen&&window.screen.lockOrientation&&screen.lockOrientation("portrait")},e.accepted=function(n){e.modal.hide(),e.isOpen=!1,window.screen&&window.screen.lockOrientation&&screen.lockOrientation("portrait")}}]),angular.module("talon.common").factory("pouchDBUtils",["pouchDBDecorators",function(e){function n(e,n){n.constructor!==Array&&(n=[n]),e.createIndex({index:{fields:n}})}function t(n){n.find=e.qify(n.find),n.upsert=e.qify(n.upsert),n.putIfNotExists=e.qify(n.putIfNotExists),n.createIndex=e.qify(n.createIndex)}return{updatePouchDB:t,index:n}}]).service("httpUtils",["$q","$http","talonRoot","$cordovaNetwork",function(e,n,t,o){function r(){var r=e.defer(),a=!0;if(a=o.isOnline(),!a)return r.reject(),r.promise;var i=forge.util.bytesToHex(forge.random.getBytes(16));return n.get(t+"api/App/MobileClient/IsAlive?echo="+i,{timeout:2e3,cache:!1}).then(function(e){200!==e.status||i!=e.data?r.reject():r.resolve()},function(){r.reject()})["catch"](function(){r.reject()}),r.promise}return{checkConnectivity:r}}]).service("encryption",["$localStorage",function(e){function n(e,n,t){var o=forge.cipher.createCipher("AES-CBC",forge.util.createBuffer(forge.util.decode64(t),"raw"));o.start({iv:forge.util.createBuffer(n,"utf8")}),o.update(forge.util.createBuffer(forge.util.createBuffer(e,"utf8"))),o.finish();var r=o.output;return forge.util.encode64(r.bytes())}function t(e,n,t){var o=forge.cipher.createDecipher("AES-CBC",forge.util.createBuffer(forge.util.decode64(t),"raw"));return o.start({iv:forge.util.createBuffer(n,"utf8")}),o.update(forge.util.createBuffer(e,"raw")),o.finish(),0==o.output.toHex().indexOf("31393333")?o.output.toString():null}function o(n){var t=e.keyset.Vendor,o=forge.pki.privateKeyFromPem(t),r=n.split("|"),a=o.decrypt(forge.util.decode64(r[1]),"RSA-OAEP"),i=o.decrypt(forge.util.decode64(r[2]),"RSA-OAEP"),c=forge.cipher.createDecipher("AES-CBC",forge.util.createBuffer(a,"raw"));return c.start({iv:forge.util.createBuffer(i,"raw")}),c.update(forge.util.createBuffer(forge.util.decode64(r[0]),"raw")),c.finish()?c.output.toString():null}function r(n){var t=forge.random.getBytesSync(16),o=forge.random.getBytesSync(16),r=forge.util.createBuffer(n,"utf8"),a=e.keyset.Server,i=forge.pki.publicKeyFromPem(a),c=forge.cipher.createCipher("AES-CBC",t);c.start({iv:o}),c.update(forge.util.createBuffer(r)),c.finish();var u=forge.util.encode64(forge.util.hexToBytes(c.output.toHex())),d=[u,forge.util.encode64(i.encrypt(t,"RSA-OAEP")),forge.util.encode64(i.encrypt(o,"RSA-OAEP"))];return d.join("|")}return{encrypt:n,decrypt:t,encryptRsaData:r,decryptRsaData:o}}]),angular.module("talon.common").service("baseDB",["$q","$localStorage",function(e,n){function t(t){var o="DB_"+t;this.find=function(t){var r=e.defer(),a=n[o]||[];return t&&(a=a.filter(t)),r.resolve(a),r.promise},this.replace=function(t){n[o]=t||[];var r=e.defer();return r.resolve(t),r.promise},this.upsert=function(t,r){var a=e.defer(),i=n[o]||[];return i=i.filter(function(e){return e&&e._id&&e._id!=t}),i.push(r),n[o]=i,a.resolve(r),a.promise},this.all=function(){return n[o]}}return t}]).service("keyDB",["pouchDB","pouchDBUtils","baseDB",function(e,n,t){var o=new t("keyDB");return o}]).service("cardLoadDB",["pouchDB","pouchDBUtils","baseDB",function(e,n,t){var o=new t("cardLoadDB");return o}]).service("qrCodeDB",["pouchDB","pouchDBUtils","baseDB",function(e,n,t){var o=new t("qrCodeDB");return o}]).service("cardLoadHistoryDB",["pouchDB","pouchDBUtils","baseDB",function(e,n,t){var o=new t("cardLoadHistoryDB");return o}]).service("transactionHistoryDB",["pouchDB","pouchDBUtils","baseDB",function(e,n,t){var o=new t("transactionHistoryDB");return o}]),angular.module("talon.nfc",["ngStorage","ngCordova","talon.constants","pouchdb","gettext"]),angular.module("talon.nfc").service("$nfcTools",["$timeout","$q","$cordovaDevice","$rootScope","$localStorage",function(e,n,t,o,r){function a(t,o,r){var a=n.defer(),i=function(n){r?e(function(){a.resolve(n)}):a.resolve(n)},c=function(n){r?e(function(){a.reject(n)}):a.reject(n)};return o.push(i),o.push(c),t.apply(window.nfcTools,o),a.promise}function i(){function r(){var t=n.defer(),r=o.$on("nfc:foundTag",function(n,o){r();var a=(o.ndefMessage||[]).map(function(e){return e.id=nfc.bytesToString(e.id),e.type=nfc.bytesToString(e.type),e.payload=nfc.bytesToString(e.payload),e});e(a.length?function(){t.resolve({id:a[0].id||forge.util.bytesToHex(forge.random.getBytes(16)),data:a[0].payload})}:function(){t.resolve({id:forge.util.bytesToHex(forge.random.getBytes(16)),data:"",atr:null})})});return t.promise}function a(){return d.acr35ReadIdFromTag().then(function(e){return d.acr35ReadDataFromTag().then(function(n){return e=e.constructor===Array?e[0]:e,{id:e,data:n[0],atr:n[1]}})})}var i=n.defer(),c=t.getPlatform();return"ios"==c.toLowerCase()?a():"android"==c.toLowerCase()?(window.nfc?window.nfc.enabled(function(){i.resolve(r())},function(){i.resolve(a())}):i.resolve(a()),i.promise):void((c.toLowerCase().indexOf("win")>-1||c.toLowerCase().indexOf("wp")>-1)&&(window.nfc?window.nfc.enabled(function(){i.resolve(r())},function(){i.resolve(null)}):i.resolve(null)))}function c(){function e(){return i().then(function(e){return e.id})}function o(){return d.acr35ReadIdFromTag().then(function(e){return e=e.constructor===Array?e[0]:e})}var r=n.defer(),a=t.getPlatform();return"ios"==a.toLowerCase()?o():"android"==a.toLowerCase()?(window.nfc?window.nfc.enabled(function(){r.resolve(e())},function(){r.resolve(o())}):r.resolve(o()),r.promise):a.toLowerCase().indexOf("win")>-1||a.toLowerCase().indexOf("wp")>-1?(window.nfc?window.nfc.enabled(function(){r.resolve(e())},function(){r.resolve(null)}):r.resolve(null),r.promise):void 0}function u(r,a){function i(t,r){var a=n.defer(),i=o.$on("nfc:foundTag",function(n,o){i();var c=[window.ndef.record(window.ndef.TNF_EXTERNAL_TYPE,util.stringToBytes("application/talon"),util.stringToBytes(r),util.stringToBytes(t))];nfc.write(c,function(){e(function(){a.resolve()})})});return a.promise}function c(e,n){return d.acr35WriteDataIntoTag(e)}var u=n.defer(),l=t.getPlatform();return"ios"==l.toLowerCase()?c(r):"android"==l.toLowerCase()?(window.nfc?window.nfc.enabled(function(){u.resolve(i(r,a))},function(){u.resolve(c(r,a))}):u.resolve(c(r,a)),u.promise):void((l.toLowerCase().indexOf("win")>-1||l.toLowerCase().indexOf("wp")>-1)&&(window.nfc?window.nfc.enabled(function(){u.resolve(i(r,a))},function(){u.resolve(null)}):u.resolve(null)))}var d={readIdAndData:i,writeData:u,readId:c,acr35WriteDataIntoTag:function(e){return a(window.nfcTools.acr35WriteDataIntoTag,[e],!0);
-
-},acr35ReadDataFromTag:function(){return a(window.nfcTools.acr35ReadDataFromTag,[],!0)},acr35ReadIdFromTag:function(){return a(window.nfcTools.acr35ReadIdFromTag,[],!0)},acr35GetDeviceStatus:function(){return a(window.nfcTools.acr35GetDeviceStatus,[],!0)},acr35GetDeviceId:function(){return a(window.nfcTools.acr35GetDeviceId,[],!0)}};return d}]),angular.module("talon.transaction",["ngStorage","ngCordova","talon.constants","talon.nfc","talon.common","talon.settings","pouchdb","gettext"]),angular.module("talon.transaction").controller("PinController",["$scope","$location","$timeout",function(e,n,t){e.cancel=function(){e.passcode="",e.modal.hide(),e.deferred.reject()},e.add=function(n){e.passcode.length<4&&(e.passcode=e.passcode+n,4==e.passcode.length&&t(function(){e.deferred.resolve(e.passcode),e.modal.hide(),t(function(){e.passcode=""},100)},0))},e["delete"]=function(){e.passcode.length>0&&(e.passcode=e.passcode.substring(0,e.passcode.length-1))}}]).controller("POSController",["$scope","$ionicModal","$q","transactionData","beneficiaryData","$cordovaSpinnerDialog","$timeout","$filter","gettext",function(e,n,t,o,r,a,i,c,u){function d(n){alert(l(u("The transaction in the amount of"))+" "+c("currency")(n,e.country.CurrencyIsoCode+" ")+" "+l(u("has been completed.")))}var l=c("translate");e.decimalChar=".",e.value="",e.clear=function(){e.value=""},e["delete"]=function(){var n=e.value.toString(10);e.value=n.substring(0,n.length-1)},e.addDigit=function(n){(n!=e.decimalChar||-1==e.value.indexOf(e.decimalChar))&&(e.value=e.value+n)},e.qrDialogOpen=!1,e.processQR=function(){var n=function(n){e.qrDialogOpen=!1,alert(n.message)};if(!e.qrDialogOpen){e.qrDialogOpen=!0;window.cordova&&window.cordova.plugins&&cordova.plugins.barcodeScanner&&cordova.plugins.barcodeScanner.scan(function(t){i(function(){if(e.qrDialogOpen=!1,!t.cancelled){var a=t.text;e.showPinModal().then(function(t){r.validateQRCode(a,t).then(function(r){return moment.unix(r.validAfter)>moment()?void alert(l(u("Voucher can't be used before"))+" "+moment.unix(r.validAfter).format("L")+"."):void e.showQRConfirmationModal(r,t).then(function(e){var t=e[0].beneficiary,r=e.map(function(e){return e.voucherCode});o.debitQRCodes(r,t).then(function(){var n=e.map(function(e){return e.value}).reduce(function(e,n){return e+n},0);d(n)})["catch"](n)})["catch"](n)})["catch"](n)})["catch"](n)}})},n)}},e.process=function(){var n=function(n){a.hide(),e.clear()},t=function(e){alert(l(u("Invalid PIN."))),a.hide()},i=function(e){alert(l(u("Not enough credit"))),a.hide()};return e.value?(a.show(l(u("Read Card")),l(u("Please hold NFC card close to reader")),!0),void r.readRawCardData().then(function(r){a.hide(),e.showPinModal().then(function(n){var c=parseFloat(e.value,10);o.loadCurrentData(n,r).then(function(t){e.clear(),e.showConfirmationModal({card:t,value:c},n).then(function(){a.show(l(u("Proccessing Transaction")),l(u("Please wait")),!0),o.debitCard(t,c,n).then(function(){a.hide(),d(c)},i,function(e){"CARD"===e&&(a.hide(),a.show(l(u("Read Card")),l(u("Please hold NFC card close to reader")),!0))})["catch"](i)})})["catch"](t)})["catch"](n)})["catch"](n)):void alert(l(u("There is no value to be charged.")))}}]).controller("ConfirmationController",["$scope","$location","$timeout",function(e,n,t){e.$watch("data",function(){e.data&&(e.total=e.data.card.current[0]+e.data.card.pending[0]-e.data.value)}),e.cancel=function(){delete e.data,delete e.pin,e.modal.hide(),e.deferred.reject()},e.pay=function(){delete e.data,delete e.pin,e.modal.hide(),e.deferred.resolve()}}]).controller("QRConfirmationController",["$scope","$location","beneficiaryData","$timeout","gettext","$filter",function(e,n,t,o,r,a){var i=a("translate");e.addVoucher=function(){var n=function(e){alert(e.message),$cordovaSpinnerDialog.hide()},a=e.pin;window.cordova&&window.cordova.plugins&&cordova.plugins.barcodeScanner&&cordova.plugins.barcodeScanner.scan(function(c){o(function(){var o=c.text;c.cancelled||t.validateQRCode(o,a).then(function(n){var t=e.vouchers.map(function(e){return e.voucherCode}),o=e.vouchers[0].beneficiary;return moment.unix(n.validAfter)>moment()?void alert(i(r("Voucher can't be used before"))+" "+moment.unix(n.validAfter).format("L")+"."):n.beneficiary.BeneficiaryId!=o.BeneficiaryId?void alert(i(r("Voucher belongs to a different beneficiary."))):t.indexOf(n.voucherCode)>-1?void alert(i(r("Voucher already added"))):void e.vouchers.push(n)})["catch"](n)})},n)},e.cancel=function(){delete e.vouchers,delete e.pin,e.modal.hide(),e.deferred.reject()},e.pay=function(){e.deferred.resolve(e.vouchers),delete e.vouchers,delete e.pin,e.modal.hide()}}]),angular.module("talon.transaction").service("transactionData",["$http","$localStorage","$q","talonRoot","$timeout","$cordovaFile","$cordovaFileTransfer","$settings","transactionHistoryDB","$rootScope","cardLoadHistoryDB","beneficiaryData","httpUtils","gettext","$filter",function e(n,t,o,r,a,i,c,u,d,l,s,e,f,p,h){function g(n,t){var o=function(e){throw e};return e.readCardData(n,t).then(function(t){return e.fetchPendingLoads(n,t).then(function(e){var n=t.beneficiary,o=t.payload,r=e.pending;return{beneficiary:n,current:o,pending:r}})["catch"](o)})["catch"](o)}function v(n,r,i){var c=o.defer(),d=function(e){alert(e.message),c.reject([-2,e])},l=n.current,f=n.pending,h=n.beneficiary,g=l[0]+f[0]-r,v=f[0]>0?f[1].unix():l[1];return g=Math.round(1e3*g)/1e3,u.hashApplication().then(function(n){var o="1933|"+g+"|"+v.toString(16);if(2==t.authorizationData.tokenType)return alert(w(p("You are logged in as an administrator. The POS mode is available for demo use only. The transaction will not be completed."))),void c.resolve();if(v>l[1]){var u={_id:h.BeneficiaryId+"-"+moment().unix(),beneficiaryId:h.BeneficiaryId,amount:f[0],date:moment().unix(),distributionDate:f[1].unix()};s.upsert(u._id,u)}a(function(){c.notify("CARD"),e.updateCardData(o,h.CardKey,i,h.CardId).then(function(e){y({type:2,beneficiaryId:h.BeneficiaryId,amountCredited:r,amountRemaining:g,date:moment().unix(),checksum:n}).then(function(){c.resolve()})["catch"](d)})["catch"](d)},100)})["catch"](d),c.promise}function m(e,n){var r=o.defer(),a=function(e){r.resolve()};return u.hashApplication().then(function(i){if(2==t.authorizationData.tokenType)return alert(w(p("You are logged in as an administrator. The POS mode is available for demo use only. The transaction will not be completed."))),void r.resolve();var c=e.map(function(e){return y({type:3,beneficiaryId:n.BeneficiaryId,voucherCode:e,date:moment().unix(),checksum:i})});o.when(c).then(function(e){r.resolve()})["catch"](a)})["catch"](a),r.promise}function y(e){var t=o.defer();return e.transactionCode=forge.util.bytesToHex(forge.random.getBytes(8)),e._id=e.beneficiaryId+"-"+e.date+"-"+e.transactionCode,e.location=l.currentLocation,e.quarantine=!1,f.checkConnectivity().then(function(){var o=2==e.type?"ProcessNFCTransaction":"ProcessQRTransaction";n.post(r+"api/App/MobileClient/"+o,e).then(function(n){return n.data&&(n=n.data),n.Success?(e.confirmationCode=n.ConfirmationCode,d.upsert(e._id,e),void t.resolve()):void t.reject(n.message)})})["catch"](function(){e.quarantine=!0,d.upsert(e._id,e),t.resolve()}),t.promise}var w=h("translate");return{processTransaction:y,loadCurrentData:g,debitCard:v,debitQRCodes:m}}]),angular.module("talon.settings",["ngStorage","ngCordova","talon.constants","pouchdb","gettext"]),angular.module("talon.settings").controller("SyncController",["$scope","$localStorage","$settings",function(e,n,t){e.setupVendor=function(){t.sync().then(function(){e.$broadcast("scroll.refreshComplete")})}}]).controller("SettingsController",["$scope","$localStorage","$rootScope","$nfcTools",function(e,n,t,o){function r(e){n.country=e,t.country=e}function a(){delete n.authorizationData,e.showLoginModal()}e.country=t.country,e.logout=a,e.updateCountry=r,e.useNDEF=function(){n.useNDEF=!0}}]),angular.module("talon.settings").service("$settings",["$timeout","$q","$cordovaFile","httpUtils","$localStorage","$http","$ionicPlatform","talonRoot","$rootScope","$cordovaNetwork","$cordovaDevice","$cordovaFileTransfer","keyDB","cardLoadDB","qrCodeDB","cardLoadHistoryDB","transactionHistoryDB","encryption","$injector",function(e,n,t,o,r,a,i,c,u,d,l,s,f,p,h,g,v,m,y){function w(){if(!window.cordova||!window.cordova.file)return n.when([]);var e=cordova.file.applicationDirectory,o=function(e){};return n.all([t.readAsDataURL(e+"www/","index.html").then(function(e){var n=forge.md.md5.create();return n.update(e),n.digest().toHex()})["catch"](function(e){return o(e),""}),t.readAsDataURL(e+"www/js/","app.js").then(function(e){var n=forge.md.md5.create();return n.update(e),n.digest().toHex()})["catch"](function(e){return o(e),""}),t.readAsDataURL(e+"www/js/","templates.js").then(function(e){var n=forge.md.md5.create();return n.update(e),n.digest().toHex()})["catch"](function(e){return o(e),""})]).then(function(e){var n=forge.md.md5.create();return n.update(e[0]),n.update(e[1]),n.update(e[2]),n.digest().toHex()})}function C(){var e=function(){return u.lastSynced=moment().format("LLL"),!0},t=n.defer();return o.checkConnectivity().then(function(){n.all([a.get(c+"api/App/MobileClient/DownloadKeyset"),D(),P(),$(),b()]).then(function(n){var o=n[0];r.keyset=o.data,e(),t.resolve()})["catch"](t.resolve.bind(t))})["catch"](function(){L().then(T).then(e).then(t.resolve.bind(t))}),t.promise}function b(){var e=g.all(),t=v.all();return n.all([a.post(c+"api/App/MobileClient/UploadCardLoads",e),a.post(c+"api/App/MobileClient/UploadTransactions",t)]).then(function(){g.replace(),v.replace()})}function D(){return a.get(c+"api/App/MobileClient/DownloadBeneficiaryKeys").then(function(e){return B(e.data)})}function B(e){return f.replace(e)}function $(){return a.get(c+"api/App/MobileClient/GenerateCardLoads").then(function(e){return S(e.data)})}function S(e){return p.replace(e)}function P(){return a.get(c+"api/App/MobileClient/GenerateQRCodes").then(function(e){return I(e.data)})}function I(e){return h.replace(e)}function T(o){function a(t,o){var r=n.defer(),a=l.getUUID(),i=encodeURI("http://10.10.10.254/data/UsbDisk1/Volume1/Talon/"+a+".zip");return cordovaHTTP.uploadFile(i,{},{Authorization:"Basic "+forge.util.encode64("admin:"),"Content-Type":null},t.toURL(),"file",function(n){e(function(){r.resolve()})},function(n){e(function(){r.reject()})}),r.promise}var i=function(e){throw e},c=new JSZip;c.file("cardLoadHistoryDB.b64",m.encryptRsaData(JSON.stringify(g.all()))),c.file("transactionHistoryDB.b64",m.encryptRsaData(JSON.stringify(v.all()))),c.file("vendorProfile.b64",m.encryptRsaData(JSON.stringify(r.currentUser)));var u=c.generate({type:"blob"}),d=cordova.file.tempDirectory||cordova.file.cacheDirectory;return t.createFile(d,"upload.zip",!0).then(function(e){return t.writeFile(d,"upload.zip",u,!0).then(function(){return a(e,u)["catch"](i)})["catch"](i)})["catch"](i)}function L(){function e(e){var n=encodeURI("http://10.10.10.254/data/UsbDisk1/Volume1/Talon/"+r.country.IsoAlpha3+".zip");return s.download(n,e.toURL())["catch"](a)}var o=cordova.file.tempDirectory||cordova.file.cacheDirectory,a=function(e){throw e};return t.createFile(o,"load.zip",!0).then(function(r){return e(r).then(function(e){return t.readAsArrayBuffer(o,"load.zip").then(function(e){var r=new JSZip(e),i=m.decryptRsaData(r.file("QRCodes.b64").asText()),c=m.decryptRsaData(r.file("CardLoads.b64").asText()),u=m.decryptRsaData(r.file("BeneficiaryKeys.b64").asText());return n.all([S(JSON.parse(c)),I(JSON.parse(i)),B(JSON.parse(u))]).then(function(){return t.removeFile(o,"load.zip").then(function(){})})["catch"](a)})["catch"](a)})["catch"](a)})["catch"](a)}return{hashApplication:w,sync:C}}]);
+angular.module("talon", [ "ionic", "talon.constants", "talon.controllers", "talon.templates", "talon.auth", "talon.beneficiary", "talon.common", "talon.nfc", "talon.transaction", "gettext" ]).run([ "$ionicPlatform", "$rootScope", "$timeout", "$localStorage", "gettextCatalog", "$ionicHistory", function($ionicPlatform, $rootScope, $timeout, $localStorage, gettextCatalog, $ionicHistory) {
+    $rootScope.$watch("currentLocale", function() {
+        gettextCatalog.setCurrentLanguage($rootScope.currentLocale), moment.locale($rootScope.currentLocale);
+        var rtl = [ "ar", "he" ];
+        $rootScope.currentDirection = rtl.indexOf($rootScope.currentLocale) > -1 ? "right" : "left";
+    }), $rootScope.currentLocale = "en", $localStorage.currentUser && ($rootScope.currentUser = $localStorage.currentUser, $rootScope.organization = $localStorage.currentUser.Organization, 
+    $rootScope.country = $localStorage.country, $rootScope.currentLocale = $localStorage.country.LanguageCode || "en"), $ionicPlatform.ready(function() {
+        window.cordova && window.cordova.plugins.Keyboard && cordova.plugins.Keyboard.hideKeyboardAccessoryBar(!0), window.StatusBar && StatusBar.styleLightContent(), window.screen && window.screen.lockOrientation && screen.lockOrientation("portrait"), 
+        window.nfc && (window.nfc.addNdefListener(function(event) {
+            $rootScope.$broadcast("nfc:foundTag", event.tag);
+        }), window.nfc.addNdefFormatableListener(function(e, tag) {
+            console.log("Formatable found");
+            var message = [ window.ndef.record(window.ndef.TNF_EXTERNAL_TYPE, util.stringToBytes("application/talon"), util.stringToBytes(forge.util.bytesToHex(forge.random.getBytes(16))), util.stringToBytes("")) ];
+            window.nfc.write(message);
+        }));
+    });
+} ]).config([ "$stateProvider", "$urlRouterProvider", "$httpProvider", function($stateProvider, $urlRouterProvider, $httpProvider) {
+    $httpProvider.interceptors.push("authInterceptor"), $stateProvider.state("app", {
+        url: "/app",
+        "abstract": !0,
+        templateUrl: "templates/menu.html"
+    }).state("app.pos", {
+        url: "/pos",
+        views: {
+            menuContent: {
+                templateUrl: "templates/pos.html"
+            }
+        }
+    }).state("app.beneficiary", {
+        url: "/beneficiary",
+        views: {
+            menuContent: {
+                templateUrl: "templates/list-beneficiaries.html"
+            }
+        }
+    }).state("app.view-beneficiary", {
+        url: "/view-beneficiary/:id",
+        views: {
+            menuContent: {
+                templateUrl: "templates/view-beneficiary.html"
+            }
+        }
+    }).state("app.receipts", {
+        url: "/receipts",
+        views: {
+            menuContent: {
+                templateUrl: "templates/blank.html"
+            }
+        }
+    }).state("app.invoices", {
+        url: "/invoices",
+        views: {
+            menuContent: {
+                templateUrl: "templates/blank.html"
+            }
+        }
+    }).state("app.sync", {
+        url: "/sync",
+        views: {
+            menuContent: {
+                templateUrl: "templates/sync.html"
+            }
+        }
+    }).state("app.settings", {
+        url: "/settings",
+        views: {
+            menuContent: {
+                templateUrl: "templates/settings.html"
+            }
+        }
+    }), $urlRouterProvider.otherwise("/app/pos");
+} ]).directive("tlnClick", function() {
+    return function(scope, element, attrs) {
+        element.bind("touchstart click", function(event) {
+            event.preventDefault(), event.stopPropagation(), scope.$apply(attrs.tlnClick);
+        });
+    };
+}), angular.module("talon.constants", []).constant("talonRoot", "https://talon.rescue.org/"), angular.module("talon.controllers", [ "ngStorage", "talon.templates", "talon.auth", "talon.beneficiary", "talon.common", "talon.nfc", "talon.transaction", "ngCordova" ]).controller("AppController", [ "$scope", "beneficiaryData", "$timeout", "$rootScope", "$cordovaGeolocation", "$ionicPlatform", "$nfcTools", "$localStorage", "$ionicModal", "$q", "$cordovaSpinnerDialog", "adminAuthentication", "$nfcTools", "$settings", "$interval", function($scope, beneficiaryData, $timeout, $rootScope, $cordovaGeolocation, $ionicPlatform, $nfcTools, $localStorage, $ionicModal, $q, $cordovaSpinnerDialog, adminAuthentication, $nfcTools, $settings, $interval) {
+    function loadDeviceInfo() {}
+    function showPinModal() {
+        return $scope.pin.deferred = $q.defer(), $scope.pin.passcode = "", $scope.login.modal && $scope.pin.modal.show(), $scope.pin.deferred.promise;
+    }
+    function showConfirmationModal(data, pin) {
+        return $scope.confirmation.deferred = $q.defer(), $scope.confirmation.data = data, $scope.confirmation.pin = pin, $scope.confirmation.modal && $scope.confirmation.modal.show(), 
+        $scope.confirmation.deferred.promise;
+    }
+    function showQRConfirmationModal(voucher, pin) {
+        return $scope.qrConfirmation.deferred = $q.defer(), $scope.qrConfirmation.vouchers = [ voucher ], $scope.qrConfirmation.pin = pin, $scope.qrConfirmation.modal && $scope.qrConfirmation.modal.show(), 
+        $scope.qrConfirmation.deferred.promise;
+    }
+    function showSignaturePad() {
+        return $scope.signature.deferred = $q.defer(), window.screen && screen.lockOrientation && screen.lockOrientation("landscape"), $scope.signature.modal && ($scope.signature.modal.show(), 
+        $scope.signature.isOpen = !0), $scope.signature.deferred.promise;
+    }
+    function showLoginModal() {
+        return $scope.login.deferred = $q.defer(), delete $localStorage.authorizationData, delete $rootScope.authorizationData, delete $localStorage.currentUser, delete $rootScope.currentUser, 
+        delete $localStorage.organization, delete $rootScope.organization, delete $localStorage.country, delete $rootScope.country, $scope.login.modal && $scope.login.modal.show(), 
+        $scope.login.deferred.promise;
+    }
+    $scope.pin = $scope.$new(), $scope.login = $scope.$new(), $scope.confirmation = $scope.$new(), $scope.qrConfirmation = $scope.$new(), $scope.signature = $scope.$new(), 
+    $rootScope.device = {}, $ionicModal.fromTemplateUrl("templates/login.html", {
+        scope: $scope.login,
+        focusFirstInput: !0,
+        backdropClickToClose: !1,
+        hardwareBackButtonClose: !1
+    }).then(function(modal) {
+        $scope.login.modal = modal;
+    }), $ionicModal.fromTemplateUrl("templates/confirmation.html", {
+        scope: $scope.confirmation,
+        backdropClickToClose: !1
+    }).then(function(modal) {
+        $scope.confirmation.modal = modal;
+    }), $ionicModal.fromTemplateUrl("templates/qr-confirmation.html", {
+        scope: $scope.qrConfirmation,
+        backdropClickToClose: !1
+    }).then(function(modal) {
+        $scope.qrConfirmation.modal = modal;
+    }), $ionicModal.fromTemplateUrl("templates/pin-code.html", {
+        scope: $scope.pin
+    }).then(function(modal) {
+        $scope.pin.modal = modal;
+    }), $ionicModal.fromTemplateUrl("templates/signature-pad.html", {
+        scope: $scope.signature
+    }).then(function(modal) {
+        $scope.signature.modal = modal, $scope.signature.isOpen = !1;
+    }), $localStorage.authorizationData ? ($rootScope.authorizationData = $localStorage.authorizationData, 2 != $localStorage.authorizationData.tokenType || $rootScope.currentUser || adminAuthentication.loadUserData()) : $scope.login.$watch("modal", function() {
+        $scope.login.modal && showLoginModal().then(function() {});
+    }), $ionicPlatform.ready(loadDeviceInfo), $rootScope.$on("onResumeCordova", loadDeviceInfo), $ionicPlatform.on("resume", function() {
+        $rootScope.currentUser = $localStorage.currentUser, $rootScope.organization = $localStorage.currentUser.Organization, $rootScope.country = $localStorage.country, 
+        $rootScope.currentLocale = $localStorage.country.LanguageCode || "en";
+    }), $ionicPlatform.ready(function() {
+        var posOptions = {
+            timeout: 1e4,
+            enableHighAccuracy: !1
+        };
+        $cordovaGeolocation.getCurrentPosition(posOptions).then(function(position) {
+            $rootScope.currentLocation = position.coords;
+        }, function(err) {});
+    }), $scope.showPinModal = showPinModal, $scope.showLoginModal = showLoginModal, $scope.showConfirmationModal = showConfirmationModal, $scope.showSignaturePad = showSignaturePad, 
+    $scope.showQRConfirmationModal = showQRConfirmationModal, $interval(function() {
+        $settings.sync();
+    }, 12e4);
+} ]), angular.module("gettext").run([ "gettextCatalog", function(gettextCatalog) {
+    gettextCatalog.setStrings("ar", {
+        "0": "0",
+        "1": "1",
+        "2": "2",
+        "3": "3",
+        "4": "4",
+        "5": "5",
+        "6": "6",
+        "7": "7",
+        "8": "8",
+        "9": "9",
+        "Assign Voucher Book": "تعيين كتاب الإيصال",
+        Beneficiary: "المستفيد",
+        "Beneficiary not registered": "المستفيد غير مسجلة",
+        Cancel: "إلغاء",
+        "Card value after transaction": "قيمة بطاقة بعد الحركة",
+        Code: "الكود",
+        Confirmation: "تأكيد",
+        Country: "الدولة",
+        Distribution: "توزيع",
+        "Download Data From Server": "تحميل البيانات من الملقم",
+        "Enter Pin": "إدخال الرمز السري",
+        "Invalid PIN.": "غير صالح",
+        "Invalid pin.": "غير صالح",
+        "Invalid username or password.": "هناك خطا في اسم المستخدم او كلمة المرور",
+        "Invalid voucher.": "قسيمة غير صالحة",
+        Invoices: "الفواتير",
+        "Last Synced On:": "مزامن آخر على:",
+        "Location:": "الموقع الجغرافي:",
+        "Log in": "تسجيل الدخول",
+        Login: "تسجيل الدخول",
+        Logout: "تسجيل خروج",
+        "Mobile Number:": "رقم الجوال",
+        "Name:": "الاسم:",
+        "Not enough credit": "الائتمان غير كافية",
+        PIN: "ثبت",
+        "POS Mode": "نقطة البيع	",
+        Password: "كلمة السر",
+        "Pay with card": "الدفع بواسطة بطاقة",
+        "Pending card load value": "قيمة تحميل بطاقة معلقة",
+        "Please hold NFC card close to reader": "يرجى إجراء بطاقة نفك قريبة من القارئ",
+        "Please sign below": "الرجاء التوقيع أدناه",
+        "Process transaction": "الحركة عملية",
+        "Provision Card": "بطاقة الاعتماد",
+        "Read Card": "بطاقة القراءة",
+        Receipts: "الإيصالات",
+        "Reload Card": "أعادة التحميل",
+        "Scan another voucher": "مسح آخر قسيمة",
+        "Scan first page": "مسح الصفحة الأولى",
+        Search: "بحث",
+        "Select Beneficiary": "حدد المستفيد",
+        "Set Pin": "تعيين رقم التعريف الشخصي",
+        Settings: "إعدادات",
+        "Sync Data": "مزامنة البيانات",
+        "The transaction in the amount of": "الحركة في مبلغ من",
+        "There is no value to be charged.": "لا توجد قيمة تكون مكلفة.",
+        "Updating PIN": "تحديث PIN",
+        Username: "المستخدم",
+        "Value of this transaction": "قيمة هذه الصفقة",
+        "Value:": "اسم القيمة:",
+        "View Beneficiary": "رأي المستفيدين",
+        Voucher: "قسيمة شراء",
+        "Voucher already added": "الإيصال بالفعل بإضافة",
+        "Voucher belongs to a different beneficiary.": "قسيمة ينتمي إلى مستفيد آخر.",
+        "Voucher can't be used before": "لا يمكن استخدام القسيمة قبل",
+        "You are logged in as an administrator. The POS mode is available for demo use only. The transaction will not be completed.": "دخولك كمسؤول. وضع نقاط البيع متاح للاستخدام التجريبي فقط. لن تكتمل الصفقة.",
+        "has been completed.": "قد اكتمل.",
+        Unknown: "غير معروف"
+    }), gettextCatalog.setStrings("en", {
+        "0": "0",
+        "1": "1",
+        "2": "2",
+        "3": "3",
+        "4": "4",
+        "5": "5",
+        "6": "6",
+        "7": "7",
+        "8": "8",
+        "9": "9",
+        "Assign Voucher Book": "Assign Voucher Book",
+        Beneficiary: "Beneficiary",
+        "Beneficiary not registered": "Beneficiary not registered",
+        Cancel: "Cancel",
+        "Card value after transaction": "Card value after transaction",
+        Code: "Code",
+        Confirmation: "Confirmation",
+        Country: "Country",
+        Distribution: "Distribution",
+        "Download Data From Server": "Download Data From Server",
+        "Enter Pin": "Enter Pin",
+        "Invalid PIN.": "Invalid PIN.",
+        "Invalid pin.": "Invalid pin.",
+        "Invalid username or password.": "Invalid username or password.",
+        "Invalid voucher.": "Invalid voucher.",
+        Invoices: "Invoices",
+        "Last Synced On:": "Last Synced On:",
+        "Location:": "Location:",
+        "Log in": "Log in",
+        Login: "Login",
+        Logout: "Logout",
+        "Mobile Number:": "Mobile Number:",
+        "Name:": "Name:",
+        "Not enough credit": "Not enough credit",
+        PIN: "PIN",
+        "POS Mode": "POS Mode",
+        Password: "Password",
+        "Pay with card": "Pay with card",
+        "Pending card load value": "Pending card load value",
+        "Please hold NFC card close to reader": "Please hold NFC card close to reader",
+        "Please sign below": "Please sign below",
+        "Process transaction": "Process transaction",
+        "Provision Card": "Provision Card",
+        "Read Card": "Read Card",
+        Receipts: "Receipts",
+        "Reload Card": "Reload Card",
+        "Scan another voucher": "Scan another voucher",
+        "Scan first page": "Scan first page",
+        Search: "Search",
+        "Select Beneficiary": "Select Beneficiary",
+        "Set Pin": "Set Pin",
+        Settings: "Settings",
+        "Sync Data": "Sync Data",
+        "The transaction in the amount of": "The transaction in the amount of",
+        "There is no value to be charged.": "There is no value to be charged.",
+        "Updating PIN": "Updating PIN",
+        Username: "Username",
+        "Value of this transaction": "Value of this transaction",
+        "Value:": "Value:",
+        "View Beneficiary": "View Beneficiary",
+        Voucher: "Voucher",
+        "Voucher already added": "Voucher already added",
+        "Voucher belongs to a different beneficiary.": "Voucher belongs to a different beneficiary.",
+        "Voucher can't be used before": "Voucher can't be used before",
+        "You are logged in as an administrator. The POS mode is available for demo use only. The transaction will not be completed.": "You are logged in as an administrator. The POS mode is available for demo use only. The transaction will not be completed.",
+        "has been completed.": "has been completed.",
+        Unknown: "Unknown"
+    }), gettextCatalog.setStrings("pt", {
+        "0": "0",
+        "1": "1",
+        "2": "2",
+        "3": "3",
+        "4": "4",
+        "5": "5",
+        "6": "6",
+        "7": "7",
+        "8": "8",
+        "9": "9",
+        "Assign Voucher Book": "Associar Livro de Cupoms",
+        Beneficiary: "Beneficiário",
+        "Beneficiary not registered": "Beneficiário não registrado",
+        Cancel: "Cancelar",
+        "Card value after transaction": "Valor do cartão após a transação",
+        Code: "Código",
+        Confirmation: "Confirmar",
+        Country: "País",
+        Distribution: "Distribuição",
+        "Download Data From Server": "Baixar dados do servidor",
+        "Enter Pin": "Entre PIN",
+        "Invalid PIN.": "PIN inválido.",
+        "Invalid pin.": "PIN inválido.",
+        "Invalid username or password.": "Usuário ou senha inválidos.",
+        "Invalid voucher.": "Cupom inválido.",
+        Invoices: "Faturas",
+        "Last Synced On:": "Última sincronização em:",
+        "Location:": "Localização:",
+        "Log in": "Entrar",
+        Login: "Entrar",
+        Logout: "Sair",
+        "Mobile Number:": "Numero do celular",
+        "Name:": "Nome",
+        "Not enough credit": "Não há credito suficiente",
+        PIN: "PIN",
+        "POS Mode": "Modo PDV",
+        Password: "Senha",
+        "Pay with card": "Pagar com cartão",
+        "Pending card load value": "Carga do cartão pendente",
+        "Please hold NFC card close to reader": "Por favor segure o cartão NFC contra o leitor",
+        "Please sign below": "Por favor assine abaixo",
+        "Process transaction": "Processar transação",
+        "Provision Card": "Configurar cartao",
+        "Read Card": "Ler cartão",
+        Receipts: "Recibos",
+        "Reload Card": "Recarregar cartão",
+        "Scan another voucher": "Escanear outro cupom",
+        "Scan first page": "Escanear primeira página",
+        Search: "Buscar",
+        "Select Beneficiary": "Selecione Beneficiário ",
+        "Set Pin": "Escolher PIN",
+        Settings: "Configurações ",
+        "Sync Data": "Sincronizar dados",
+        "The transaction in the amount of": "A transação no valor de",
+        "There is no value to be charged.": "Não há valor a ser cobrado.",
+        "Updating PIN": "Atualizando PIN",
+        Username: "Usuário",
+        "Value of this transaction": "Valor dessa transação",
+        "Value:": "Valor:",
+        "View Beneficiary": "Ver beneficiário",
+        Voucher: "Cupom",
+        "Voucher already added": "Cupom já foi associado",
+        "Voucher belongs to a different beneficiary.": "Cupom pertence a outro beneficiário",
+        "Voucher can't be used before": "Este cupom não pode ser usado antes",
+        "You are logged in as an administrator. The POS mode is available for demo use only. The transaction will not be completed.": "Você esta logado como um administrador. O modo PDV só é disponível para demonstrações. Essa transação não será completada. ",
+        "has been completed.": "foi completada",
+        Unknown: "Desconhecido"
+    });
+} ]), angular.module("talon.auth", [ "ngStorage", "ngCordova", "talon.constants", "pouchdb", "gettext" ]), angular.module("talon.auth").controller("LoginController", [ "$scope", "$ionicHistory", "$state", "$rootScope", "$localStorage", "vendorAuthentication", "adminAuthentication", function($scope, $ionicHistory, $state, $rootScope, $localStorage, vendorAuthentication, adminAuthentication) {
+    $scope.loginData = {}, $scope.wrongPassword = !1, $scope.loginAdmin = function() {
+        adminAuthentication.login($scope.loginData.username, $scope.loginData.password).then(function() {
+            $rootScope.authorizationData = $localStorage.authorizationData, adminAuthentication.loadUserData().then(function() {
+                $scope.deferred.resolve(), $scope.modal.hide(), $scope.wrongPassword = !1, $scope.loginData = {};
+            });
+        })["catch"](function() {
+            $scope.wrongPassword = !0;
+        });
+    }, $scope.loginVendor = function() {
+        vendorAuthentication.login($scope.loginData.username, $scope.loginData.password).then(function() {
+            $scope.deferred.resolve(), $scope.modal.hide(), $scope.wrongPassword = !1, $scope.loginData = {}, $rootScope.authorizationData = $localStorage.authorizationData;
+        })["catch"](function() {
+            $scope.wrongPassword = !0;
+        });
+    };
+} ]), angular.module("talon.auth").factory("authInterceptor", [ "$q", "$injector", "$location", "$localStorage", function($q, $injector, $location, $localStorage, $rootScope) {
+    var authInterceptorServiceFactory = {}, _request = function(config) {
+        config.headers = config.headers || {};
+        var authData = $localStorage.authorizationData;
+        if (authData && (config.headers.Authorization = (1 == $localStorage.authorizationData.tokenType ? "Token " : "Bearer ") + authData.token), $localStorage.currentUser) {
+            if ($localStorage.authorizationData && 2 == $localStorage.authorizationData.tokenType && $localStorage.currentUser.Organization) {
+                var organizationId = $localStorage.currentUser.Organization.Id;
+                config.headers["X-Tenant-Organization"] = organizationId;
+            }
+            if ($localStorage.authorizationData && 1 == $localStorage.authorizationData.tokenType) {
+                $localStorage.currentUser.Id;
+            }
+            if ($localStorage.country) {
+                var countryId = $localStorage.country.Id;
+                config.headers["X-Tenant-Country"] = countryId;
+            }
+        }
+        return config;
+    }, _responseError = function(rejection) {
+        return 401 === rejection.status, $q.reject(rejection);
+    };
+    return authInterceptorServiceFactory.request = _request, authInterceptorServiceFactory.responseError = _responseError, authInterceptorServiceFactory;
+} ]), angular.module("talon.auth").service("adminAuthentication", [ "$http", "$localStorage", "$q", "$rootScope", "talonRoot", "$cordovaDevice", function($http, $localStorage, $q, $rootScope, talonRoot, $cordovaDevice) {
+    function login(username, password) {
+        var data = "grant_type=password&username=" + username + "&password=" + password, deferred = $q.defer();
+        return $http.post(serviceRoot + "token", data, {
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            }
+        }).success(function(response) {
+            $localStorage.authorizationData = {
+                token: response.access_token,
+                userName: username,
+                uuid: device.UUID || device.uuid,
+                tokenType: 2
+            }, deferred.resolve(!0);
+        }).error(function(err, status) {
+            logOut(), deferred.reject(!1);
+        }), deferred.promise;
+    }
+    function logOut() {}
+    function loadUserData() {
+        var deferred = $q.defer();
+        if ($localStorage.currentUser) {
+            $rootScope.currentUser = $localStorage.currentUser, $rootScope.organization = $rootScope.currentUser.Organization;
+            var countries = $rootScope.currentUser.Countries.map(function(c) {
+                return c.Country;
+            });
+            $localStorage.country || ($localStorage.country = countries[0]), $rootScope.country = $localStorage.country, $rootScope.currentLocale = $localStorage.country.LanguageCode || "en", 
+            $rootScope.availableCountries = $rootScope.currentUser.Countries.length > 1 ? countries : !1, deferred.resolve();
+        } else $http.get(serviceRoot + "api/ApplicationUser/Me").then(function(response) {
+            $rootScope.currentUser = response.data, $localStorage.currentUser = response.data, $rootScope.organization = $rootScope.currentUser.Organization, $localStorage.organization = $rootScope.currentUser.Organization;
+            var countries = $rootScope.currentUser.Countries.map(function(c) {
+                return c.Country;
+            });
+            $localStorage.country || ($localStorage.country = countries[0]), $rootScope.country = $localStorage.country, $rootScope.currentLocale = $localStorage.country.LanguageCode || "en", 
+            $rootScope.availableCountries = $rootScope.currentUser.Countries.length > 1 ? countries : !1, deferred.resolve();
+        })["catch"](function(error) {
+            console.log(error), deferred.reject(error);
+        });
+        return deferred.promise;
+    }
+    var serviceRoot = talonRoot, device = {};
+    return window.device ? device = $cordovaDevice.getDevice() : device.uuid = "00:00:00:00", {
+        login: login,
+        logOut: logOut,
+        loadUserData: loadUserData
+    };
+} ]).service("vendorAuthentication", [ "$http", "$q", "talonRoot", "$cordovaDevice", "$localStorage", "$rootScope", function($http, $q, talonRoot, $cordovaDevice, $localStorage, $rootScope) {
+    function login(userName, password) {
+        var device = {};
+        window.device ? device = $cordovaDevice.getDevice() : device.uuid = "00:00:00:00";
+        var payload = {
+            UserName: userName,
+            Password: password,
+            Device: device
+        }, deferred = $q.defer();
+        return $http.post(talonRoot + "api/App/VendorProfile/Login", payload).then(function(response) {
+            200 == response.status ? ($localStorage.authorizationData = {
+                userName: payload.UserName,
+                token: response.data.token,
+                uuid: device.UUID || device.uuid,
+                tokenType: 1
+            }, loadVendorProfile(response.data.id).then(function() {
+                deferred.resolve($localStorage.authorizationData);
+            })) : deferred.reject(response.data);
+        })["catch"](function(err, status) {
+            deferred.reject(err);
+        }), deferred.promise;
+    }
+    function loadVendorProfile(vendorId) {
+        var deferred = $q.defer();
+        return $localStorage.currentUser ? ($rootScope.currentUser = $localStorage.currentUser, $localStorage.country = $rootScope.currentUser.Country, $rootScope.country = $localStorage.country, 
+        $rootScope.currentLocale = $localStorage.country.LanguageCode || "en", deferred.resolve()) : $http.get(talonRoot + "api/App/VendorProfile/LoadProfile").then(function(response) {
+            $rootScope.currentUser = response.data, $localStorage.currentUser = response.data, $localStorage.country || ($localStorage.country = $rootScope.currentUser.Country), 
+            $rootScope.country = $localStorage.country, $rootScope.currentLocale = $localStorage.country.LanguageCode || "en", deferred.resolve();
+        })["catch"](function(error) {
+            console.log(error), deferred.reject(error);
+        }), deferred.promise;
+    }
+    var vendorAuthServiceFactory = {
+        login: login
+    };
+    return vendorAuthServiceFactory;
+} ]), angular.module("talon.beneficiary", [ "ngStorage", "ngCordova", "talon.constants", "pouchdb", "talon.nfc", "talon.common", "gettext" ]), angular.module("talon.beneficiary").controller("BeneficiaryController", [ "$scope", "$localStorage", "$ionicModal", "$cordovaSpinnerDialog", "beneficiaryData", "gettext", "$filter", function($scope, $localStorage, $ionicModal, $cordovaSpinnerDialog, beneficiaryData, gettext, $filter) {
+    function reloadCard() {
+        var failFunction = function(error) {
+            console.log(error), $cordovaSpinnerDialog.hide();
+        };
+        $scope.showPinModal().then(function(pin) {
+            $cordovaSpinnerDialog.show(translate(gettext("Reload Card")), translate(gettext("Please hold NFC card close to reader")), !0), beneficiaryData.reloadCard(pin).then(function() {
+                $cordovaSpinnerDialog.hide();
+            })["catch"](failFunction);
+        })["catch"](failFunction);
+    }
+    function readCard() {
+        var failFunction = function(error) {
+            console.log(error), $cordovaSpinnerDialog.hide();
+        };
+        $cordovaSpinnerDialog.show(translate(gettext("Read Card")), translate(gettext("Please hold NFC card close to reader")), !0), beneficiaryData.readRawCardData().then(function(data) {
+            $scope.showPinModal().then(function(pin) {
+                beneficiaryData.readCardData(pin, data).then(function(info) {
+                    $scope.cardInfo = info, $cordovaSpinnerDialog.hide();
+                })["catch"](failFunction);
+            })["catch"](failFunction);
+        })["catch"](failFunction);
+    }
+    $scope.reloadCard = reloadCard, $scope.readCard = readCard;
+    var translate = $filter("translate");
+} ]).controller("ListBeneficiaryController", [ "$scope", "$localStorage", "$q", "$timeout", "$http", "beneficiaryData", function($scope, $localStorage, $q, $timeout, $http, beneficiaryData) {
+    function beneficiariesByName(name) {
+        return timeout && $timeout.cancel(timeout), timeout = $timeout(function() {
+            beneficiaryData.listBeneficiariesByName(name).then(function(beneficiaries) {
+                $scope.beneficiaries = beneficiaries;
+            }), timeout = null;
+        }, 500);
+    }
+    $scope.beneficiaries = [], $scope.beneficiariesByName = beneficiariesByName;
+    var timeout = null;
+} ]).controller("ViewBeneficiaryController", [ "$scope", "$localStorage", "$q", "$timeout", "$http", "$state", "talonRoot", "beneficiaryData", "$cordovaSpinnerDialog", "$ionicModal", "gettext", "$filter", function($scope, $localStorage, $q, $timeout, $http, $state, talonRoot, beneficiaryData, $cordovaSpinnerDialog, $ionicModal, gettext, $filter) {
+    $scope.voucherBook = $scope.$new();
+    var translate = $filter("translate");
+    beneficiaryData.fetchBeneficiaryById($state.params.id).then(function(beneficiaries) {
+        $scope.beneficiary = beneficiaries, $scope.voucherBook.scan = function() {
+            var failFunction = function(error) {
+                console.log(error);
+            };
+            return window.cordova && window.cordova.plugins && window.cordova.plugins.barcodeScanner ? void cordova.plugins.barcodeScanner.scan(function(result) {
+                $timeout(function() {
+                    var code = result.text;
+                    return result.cancelled ? void console.log(result.cancelled) : void beneficiaryData.assignVoucherBook($scope.beneficiary.Id, $scope.voucherBook.selectedDistributionId, code).then(function() {
+                        $scope.voucherBook.modal.hide();
+                    })["catch"](failFunction);
+                });
+            }, failFunction) : (console.log("DEBUGGING"), void beneficiaryData.assignVoucherBook($scope.beneficiary.Id, $scope.voucherBook.selectedDistributionId, "100100").then(function() {
+                $scope.voucherBook.modal.hide();
+            })["catch"](failFunction));
+        }, $scope.voucherBook.updateDistribution = function(distribution) {
+            $scope.voucherBook.selectedDistributionId = distribution.id;
+        }, $scope.voucherBook.cancel = function() {
+            $scope.voucherBook.modal.hide();
+        }, $scope.setPin = function() {
+            var failFunction = function(error) {
+                console.log(error);
+            }, beneficiaryId = $scope.beneficiary.Id;
+            $scope.showPinModal().then(function(pin) {
+                $cordovaSpinnerDialog.show(translate(gettext("PIN")), translate(gettext("Updating PIN")), !0), beneficiaryData.setPin(beneficiaryId, pin).then(function() {
+                    $cordovaSpinnerDialog.hide();
+                })["catch"](failFunction);
+            })["catch"](failFunction);
+        }, $scope.provisionCard = function() {
+            var failFunction = function(error) {
+                console.log(error), $cordovaSpinnerDialog.hide();
+            }, beneficiaryId = $scope.beneficiary.Id;
+            $cordovaSpinnerDialog.show(translate(gettext("Read Card")), translate(gettext("Please hold NFC card close to reader")), !0), beneficiaryData.provisionBeneficiary(beneficiaryId).then(function() {
+                $cordovaSpinnerDialog.hide();
+            })["catch"](failFunction);
+        }, $scope.assignVoucherBook = function() {
+            $ionicModal.fromTemplateUrl("templates/assign-voucher-book.html", {
+                scope: $scope.voucherBook
+            }).then(function(modal) {
+                $scope.voucherBook.modal = modal, $scope.voucherBook.modal.show(), beneficiaryData.listDistributions($scope.beneficiary.Id).then(function(distributions) {
+                    $scope.voucherBook.distributions = distributions, $scope.voucherBook.selectedDistributionId = null;
+                });
+            });
+        };
+    });
+} ]), angular.module("talon.beneficiary").directive("ionSearch", function() {
+    return {
+        restrict: "E",
+        replace: !0,
+        scope: {
+            getData: "&source",
+            model: "=?",
+            search: "=?filter"
+        },
+        link: function(scope, element, attrs) {
+            attrs.minLength = attrs.minLength || 0, scope.placeholder = attrs.placeholder || "", scope.search = {
+                value: ""
+            }, attrs["class"] && element.addClass(attrs["class"]), attrs.source && scope.$watch("search.value", function(newValue, oldValue) {
+                newValue.length > attrs.minLength ? scope.getData({
+                    str: newValue
+                }).then(function(results) {
+                    scope.model = results;
+                }) : scope.model = [];
+            }), scope.clearSearch = function() {
+                scope.search.value = "";
+            };
+        },
+        template: '<div class="item-input-wrapper"><i class="icon ion-android-search"></i><input type="search" placeholder="{{placeholder}}" ng-model="search.value"><i ng-if="search.value.length > 0" ng-click="clearSearch()" class="icon ion-close"></i></div>'
+    };
+}).directive("signaturePad", [ "$timeout", function($timeout) {
+    return {
+        restrict: "E",
+        scope: {
+            model: "=",
+            cancelled: "=",
+            accepted: "=",
+            isOpen: "="
+        },
+        link: function(scope, element, attrs) {
+            scope.acceptSignature = function() {
+                scope.accepted && scope.accepted($("#signature-pad", element).jSignature("getData", "svgbase64"));
+            }, scope.closeDialog = function() {
+                scope.cancelled && scope.cancelled();
+            }, scope.clearSignature = function() {
+                $("#signature-pad", element).jSignature("reset");
+            };
+            var created = !1;
+            scope.$watch("isOpen", function() {
+                scope.isOpen && (created || ($("#signature-pad").jSignature(), created = !0), 0 == $("#signature-pad", element).children().length && $("#signature-pad", element).jSignature("reset"));
+            });
+        },
+        template: '<div id="signature-pad" style="height:60%; overflow: hidden;"></div><div class="row"><div class="col"><button class="button button-assertive button-block" tln-click="closeDialog()">Cancel</button></div><div class="col"><button class="button button-stable button-block" tln-click="clearSignature()">Clear</button></div><div class="col"></div><div class="col"></div><div class="col"><button class="button button-positive button-block" tln-click="acceptSignature()">Accept</button></div></div>'
+    };
+} ]), angular.module("talon.beneficiary").service("beneficiaryData", [ "$http", "$localStorage", "keyDB", "cardLoadDB", "$q", "talonRoot", "qrCodeDB", "$nfcTools", "$ionicPlatform", "$timeout", "$cordovaFile", "$cordovaFileTransfer", "httpUtils", "encryption", "$state", "gettext", "$filter", function($http, $localStorage, keyDB, cardLoadDB, $q, talonRoot, qrCodeDB, $nfcTools, $ionicPlatform, $timeout, $cordovaFile, $cordovaFileTransfer, httpUtils, encryption, $state, gettext, $filter) {
+    function validateQRCode(code, pin) {
+        return qrCodeDB.find(function(o) {
+            return o.VoucherCode == code;
+        }).then(function(res) {
+            var docs = res;
+            if (0 == docs.length) throw new Error(translate(gettext("Invalid voucher.")));
+            var voucher = docs[0];
+            return keyDB.find(function(o) {
+                return o.BeneficiaryId == voucher.BeneficiaryId;
+            }).then(function(res) {
+                if (0 == res.length) throw new Error(translate(gettext("Beneficiary not registered")));
+                var beneficiary = res[0], encryptedData = forge.util.decode64(voucher.Payload), decryptedString = encryption.decrypt(encryptedData, pin, beneficiary.CardKey);
+                if (!decryptedString) throw new Error(translate(gettext("Invalid pin.")));
+                var voucherValues = decryptedString.split("|"), value = parseFloat(voucherValues[1], 10), validAfter = parseInt(voucherValues[2], 16), voucherCode = voucherValues[3];
+                return {
+                    value: value,
+                    validAfter: validAfter,
+                    voucherCode: voucherCode,
+                    beneficiary: beneficiary
+                };
+            });
+        });
+    }
+    function ProvisionBeneficiary(beneficiaryId) {
+        var def = $q.defer();
+        return $nfcTools.readId().then(function(id) {
+            $http.post(talonRoot + "api/App/MobileClient/ProvisionBeneficiary", {
+                beneficiaryId: beneficiaryId,
+                cardId: id
+            }).then(function(k) {
+                var key = k.data;
+                keyDB.upsert(key._id, key), $http.get(talonRoot + "api/App/MobileClient/GenerateInitialLoad?beneficiaryId=" + key.BeneficiaryId).then(function(res) {
+                    var payload = res.data;
+                    payload = forge.util.bytesToHex(forge.util.decode64(payload)), $nfcTools.writeData(payload, key.CardId).then(def.resolve.bind(def));
+                });
+            });
+        })["catch"](function() {
+            def.reject();
+        }), def.promise;
+    }
+    function SetPin(beneficiaryId, pin) {
+        return $http.post(talonRoot + "api/App/MobileClient/SetBeneficiaryPin", {
+            beneficiaryId: beneficiaryId,
+            pin: pin
+        }).then(function(k) {});
+    }
+    function AssignVoucherBook(beneficiaryId, distributionId, serialNumber) {
+        return $http.post(talonRoot + "api/App/MobileClient/AssignVoucherBook", {
+            beneficiaryId: beneficiaryId,
+            distributionId: distributionId,
+            serialNumber: serialNumber
+        }).then(function(k) {});
+    }
+    function ListDistributions(beneficiaryId) {
+        return $http.get(talonRoot + "api/App/MobileClient/ListDistributionsForBeneficiary?beneficiaryId=" + beneficiaryId).then(function(res) {
+            return res.data;
+        });
+    }
+    function ReadRawCardData() {
+        var def = $q.defer(), resolved = !1, timeout = $timeout(function() {
+            resolved || (resolved = !0, def.reject());
+        }, 15e3);
+        return $nfcTools.readIdAndData().then(function(cardData) {
+            resolved || ($timeout.cancel(timeout), def.resolve(cardData), resolved = !0);
+        }), def.promise;
+    }
+    function ReadCardData(pin, data) {
+        var dataPromise = null;
+        return dataPromise = $q.when(data ? data : ReadRawCardData()), console.log("Acquiring data"), dataPromise.then(function(cardData) {
+            return console.log("ed data"), console.log(cardData), FetchBeneficiary(cardData.id).then(function(beneficiary) {
+                return console.log("beneficiary"), console.log(cardData.data, beneficiary.CardKey, pin), DecryptCardData(cardData.data, beneficiary.CardKey, pin).then(function(payload) {
+                    return console.log("decrypted"), {
+                        beneficiary: beneficiary,
+                        payload: payload
+                    };
+                });
+            });
+        });
+    }
+    function ReloadCard(pin) {
+        var def = $q.defer(), failFunction = function(error) {
+            console.log(error), def.reject(error);
+        };
+        return FetchPendingLoads(pin).then(function(pendingLoad) {
+            var load = pendingLoad.pending, cardPayload = pendingLoad.card.payload, beneficiary = pendingLoad.card.beneficiary, currentAmount = cardPayload[0];
+            if (0 == load[0]) return void def.resolve();
+            var payload = "1933|" + (load[0] + currentAmount) + "|" + load[1].unix().toString(16);
+            $timeout(function() {
+                UpdateCardData(payload, beneficiary.CardKey, pin, beneficiary.CardId).then(function(update) {
+                    def.resolve();
+                })["catch"](failFunction);
+            }, 500);
+        })["catch"](failFunction), def.promise;
+    }
+    function FetchPendingLoads(pin, cardLoad) {
+        var def = $q.defer(), failFunction = function(error) {
+            console.log(error), def.reject(error);
+        }, preloadDef = $q.defer();
+        return cardLoad ? preloadDef.resolve(cardLoad) : ReadCardData(pin).then(preloadDef.resolve.bind(preloadDef)), preloadDef.promise.then(function(card) {
+            {
+                var cardPayload = card.payload, beneficiary = card.beneficiary, since = moment.unix(cardPayload[1]);
+                cardPayload[0];
+            }
+            cardLoadDB.find(function(o) {
+                return o.CardId == beneficiary.CardId;
+            }).then(function(res) {
+                0 == res.length && def.resolve({
+                    pending: [ 0, 0 ],
+                    card: card
+                });
+                var loads = res[0].Load, data = loads.map(function(d) {
+                    var encryptedData = forge.util.decode64(d), decrypted = encryption.decrypt(encryptedData, pin, beneficiary.CardKey);
+                    if (!decrypted) throw new Error();
+                    var values = decrypted.split("|");
+                    return [ parseFloat(values[1], 10), moment.unix(parseInt(values[2], 16)) ];
+                }), load = data.filter(function(d) {
+                    return d[1] > since;
+                }).reduce(function(a, b) {
+                    return [ a[0] + b[0], a[1] > b[1] ? a[1] : b[1] ];
+                }, [ 0, 0 ]);
+                def.resolve(0 == load[0] && 0 == load[1] ? {
+                    pending: [ 0, 0 ],
+                    card: card
+                } : {
+                    pending: load,
+                    card: card
+                });
+            })["catch"](failFunction);
+        })["catch"](failFunction), def.promise;
+    }
+    function UpdateCardData(data, key, pin, id) {
+        var encrypedB64 = encryption.encrypt(data, pin, key), encrypted = forge.util.createBuffer(forge.util.decode64(encrypedB64), "raw").toHex(), def = $q.defer();
+        return $nfcTools.writeData(encrypted, id).then(function(result) {
+            def.resolve(result);
+        }), def.promise;
+    }
+    function DecryptCardData(cardData, key, pin) {
+        var def = $q.defer(), firstIndex = cardData.indexOf("0000");
+        firstIndex % 2 == 1 && (firstIndex += 1);
+        var dataToZero = firstIndex > -1 ? cardData.substring(0, firstIndex) : cardData, encryptedData = forge.util.hexToBytes(dataToZero), decrypted = encryption.decrypt(encryptedData, pin, key);
+        if (!decrypted) return def.reject(), def.promise;
+        var values = decrypted.split("|"), currentCard = [ parseFloat(values[1], 10), parseInt(values[2], 16) ];
+        return def.resolve(currentCard), def.promise;
+    }
+    function FetchBeneficiary(id) {
+        var def = $q.defer();
+        return keyDB.find(function(o) {
+            return o.CardId == id;
+        }).then(function(s) {
+            s.length && def.resolve(s[0]), def.reject();
+        }), def.promise;
+    }
+    function ListBeneficiariesByName(name) {
+        var filter = "$filter=startswith(tolower(FirstName), '" + encodeURIComponent(name.toLowerCase()) + "') or startswith(tolower(LastName), '" + encodeURIComponent(name.toLowerCase()) + "')";
+        return $http.get(talonRoot + "Breeze/EVM/Beneficiaries?" + filter).then(function(res) {
+            return res.data;
+        });
+    }
+    function FetchBeneficiaryById(id) {
+        return $http.get(talonRoot + "Breeze/EVM/Beneficiaries?$expand=Location&$filter=Id eq " + $state.params.id).then(function(res) {
+            return res.data[0];
+        });
+    }
+    var translate = $filter("translate");
+    return {
+        reloadCard: ReloadCard,
+        readCardData: ReadCardData,
+        readRawCardData: ReadRawCardData,
+        updateCardData: UpdateCardData,
+        provisionBeneficiary: ProvisionBeneficiary,
+        listBeneficiariesByName: ListBeneficiariesByName,
+        fetchBeneficiaryById: FetchBeneficiaryById,
+        fetchPendingLoads: FetchPendingLoads,
+        validateQRCode: validateQRCode,
+        setPin: SetPin,
+        listDistributions: ListDistributions,
+        assignVoucherBook: AssignVoucherBook
+    };
+} ]), angular.module("talon.common", [ "ngStorage", "ngCordova", "talon.constants", "pouchdb", "gettext" ]), window.plugins || (window.plugins = {}), window.plugins.spinnerDialog || (window.plugins.spinnerDialog = {
+    show: function() {
+        return !0;
+    },
+    hide: function() {
+        return !0;
+    }
+}), angular.module("talon.common").controller("SignaturePadController", [ "$scope", function($scope) {
+    $scope.closeDialog = function() {
+        $scope.modal.hide(), $scope.isOpen = !1, window.screen && window.screen.lockOrientation && screen.lockOrientation("portrait");
+    }, $scope.accepted = function(signed) {
+        $scope.modal.hide(), $scope.isOpen = !1, window.screen && window.screen.lockOrientation && screen.lockOrientation("portrait");
+    };
+} ]), angular.module("talon.common").factory("pouchDBUtils", [ "pouchDBDecorators", function(pouchDBDecorators) {
+    function index(db, fields) {
+        fields.constructor !== Array && (fields = [ fields ]), db.createIndex({
+            index: {
+                fields: fields
+            }
+        });
+    }
+    function updatePouchDB(db) {
+        db.find = pouchDBDecorators.qify(db.find), db.upsert = pouchDBDecorators.qify(db.upsert), db.putIfNotExists = pouchDBDecorators.qify(db.putIfNotExists), db.createIndex = pouchDBDecorators.qify(db.createIndex);
+    }
+    return {
+        updatePouchDB: updatePouchDB,
+        index: index
+    };
+} ]).service("httpUtils", [ "$q", "$http", "talonRoot", "$cordovaNetwork", function($q, $http, talonRoot, $cordovaNetwork) {
+    function checkConnectivity() {
+        var def = $q.defer(), isOnline = !0;
+        if (isOnline = !0, !isOnline) return def.reject(), def.promise;
+        var echo = forge.util.bytesToHex(forge.random.getBytes(16));
+        return $http.get(talonRoot + "api/App/MobileClient/IsAlive?echo=" + echo, {
+            timeout: 2e3,
+            cache: !1
+        }).then(function(r) {
+            200 !== r.status || echo != r.data ? def.reject() : def.resolve();
+        }, function() {
+            console.log("Fail?"), def.reject();
+        })["catch"](function() {
+            console.log("Fail?"), def.reject();
+        }), def.promise;
+    }
+    return {
+        checkConnectivity: checkConnectivity
+    };
+} ]).service("encryption", [ "$localStorage", function($localStorage) {
+    function encrypt(dataString, pin, key) {
+        var cipher = forge.cipher.createCipher("AES-CBC", forge.util.createBuffer(forge.util.decode64(key), "raw"));
+        cipher.start({
+            iv: forge.util.createBuffer(pin, "utf8")
+        }), cipher.update(forge.util.createBuffer(forge.util.createBuffer(dataString, "utf8"))), cipher.finish();
+        var encrypted = cipher.output;
+        return forge.util.encode64(encrypted.bytes());
+    }
+    function decrypt(dataBytes, pin, key) {
+        var decipher = forge.cipher.createDecipher("AES-CBC", forge.util.createBuffer(forge.util.decode64(key), "raw"));
+        return decipher.start({
+            iv: forge.util.createBuffer(pin, "utf8")
+        }), decipher.update(forge.util.createBuffer(dataBytes, "raw")), decipher.finish(), 0 == decipher.output.toHex().indexOf("31393333") ? decipher.output.toString() : null;
+    }
+    function decryptRsaData(data64) {
+        var keyPEM = $localStorage.keyset.Vendor, privateKey = forge.pki.privateKeyFromPem(keyPEM), payload = data64.split("|"), key = privateKey.decrypt(forge.util.decode64(payload[1]), "RSA-OAEP"), iv = privateKey.decrypt(forge.util.decode64(payload[2]), "RSA-OAEP"), decipher = forge.cipher.createDecipher("AES-CBC", forge.util.createBuffer(key, "raw"));
+        return decipher.start({
+            iv: forge.util.createBuffer(iv, "raw")
+        }), decipher.update(forge.util.createBuffer(forge.util.decode64(payload[0]), "raw")), decipher.finish() ? decipher.output.toString() : null;
+    }
+    function encryptRsaData(dataString) {
+        var key = forge.random.getBytesSync(16), iv = forge.random.getBytesSync(16), bytes = forge.util.createBuffer(dataString, "utf8"), keyPEM = $localStorage.keyset.Server, privateKey = forge.pki.publicKeyFromPem(keyPEM), cipher = forge.cipher.createCipher("AES-CBC", key);
+        cipher.start({
+            iv: iv
+        }), cipher.update(forge.util.createBuffer(bytes)), cipher.finish();
+        var encrypted = forge.util.encode64(forge.util.hexToBytes(cipher.output.toHex())), result = [ encrypted, forge.util.encode64(privateKey.encrypt(key, "RSA-OAEP")), forge.util.encode64(privateKey.encrypt(iv, "RSA-OAEP")) ];
+        return result.join("|");
+    }
+    return {
+        encrypt: encrypt,
+        decrypt: decrypt,
+        encryptRsaData: encryptRsaData,
+        decryptRsaData: decryptRsaData
+    };
+} ]), angular.module("talon.common").service("baseDB", [ "$q", "$localStorage", function($q, $localStorage) {
+    function BaseDB(name) {
+        var internalName = "DB_" + name;
+        this.find = function(selector) {
+            var def = $q.defer(), filtered = $localStorage[internalName] || [];
+            return selector && (filtered = filtered.filter(selector)), def.resolve(filtered), def.promise;
+        }, this.replace = function(col) {
+            $localStorage[internalName] = col || [];
+            var def = $q.defer();
+            return def.resolve(col), def.promise;
+        }, this.upsert = function(_id, obj) {
+            var def = $q.defer(), filtered = $localStorage[internalName] || [];
+            return filtered = filtered.filter(function(o) {
+                return o && o._id && o._id != _id;
+            }), filtered.push(obj), $localStorage[internalName] = filtered, def.resolve(obj), def.promise;
+        }, this.all = function() {
+            return $localStorage[internalName];
+        };
+    }
+    return BaseDB;
+} ]).service("keyDB", [ "pouchDB", "pouchDBUtils", "baseDB", function(pouchDB, pouchDBUtils, baseDB) {
+    var db = new baseDB("keyDB");
+    return db;
+} ]).service("cardLoadDB", [ "pouchDB", "pouchDBUtils", "baseDB", function(pouchDB, pouchDBUtils, baseDB) {
+    var db = new baseDB("cardLoadDB");
+    return db;
+} ]).service("qrCodeDB", [ "pouchDB", "pouchDBUtils", "baseDB", function(pouchDB, pouchDBUtils, baseDB) {
+    var db = new baseDB("qrCodeDB");
+    return db;
+} ]).service("cardLoadHistoryDB", [ "pouchDB", "pouchDBUtils", "baseDB", function(pouchDB, pouchDBUtils, baseDB) {
+    var db = new baseDB("cardLoadHistoryDB");
+    return db;
+} ]).service("transactionHistoryDB", [ "pouchDB", "pouchDBUtils", "baseDB", function(pouchDB, pouchDBUtils, baseDB) {
+    var db = new baseDB("transactionHistoryDB");
+    return db;
+} ]), angular.module("talon.nfc", [ "ngStorage", "ngCordova", "talon.constants", "pouchdb", "gettext" ]), angular.module("talon.nfc").service("$nfcTools", [ "$timeout", "$q", "$cordovaDevice", "$rootScope", "$localStorage", function($timeout, $q, $cordovaDevice, $rootScope, $localStorage) {
+    function makePromise(fn, args, async) {
+        var deferred = $q.defer(), success = function(response) {
+            console.log("success"), async ? $timeout(function() {
+                deferred.resolve(response);
+            }) : deferred.resolve(response);
+        }, fail = function(response) {
+            console.log("fail"), async ? $timeout(function() {
+                deferred.reject(response);
+            }) : deferred.reject(response);
+        };
+        return args.push(success), args.push(fail), fn.apply(window.nfcTools, args), deferred.promise;
+    }
+    function readIdAndData() {
+        function UseMock() {
+            return $localStorage.mockCard ? {
+                id: $localStorage.mockCard[1],
+                data: $localStorage.mockCard[0],
+                atr: null
+            } : {
+                id: forge.util.bytesToHex(forge.random.getBytes(16)),
+                data: "",
+                atr: null
+            };
+        }
+        var def = $q.defer();
+        return def.resolve(UseMock()), def.promise;
+    }
+    function readId() {
+        function UseMock() {
+            return readIdAndData().then(function(tag) {
+                return tag.id;
+            });
+        }
+        var def = $q.defer();
+        return def.resolve(UseMock()), def.promise;
+    }
+    function writeData(dataHex, id) {
+        function UseMock(data, id) {
+            return $localStorage.mockCard = [ data, id ], !0;
+        }
+        console.log("Writing data"), console.log(dataHex);
+        var def = $q.defer();
+        return def.resolve(UseMock(dataHex, id)), def.promise;
+    }
+    var nfcTools = {
+        readIdAndData: readIdAndData,
+        writeData: writeData,
+        readId: readId,
+        acr35WriteDataIntoTag: function(data) {
+            return console.log("acr35WriteDataIntoTag"), makePromise(window.nfcTools.acr35WriteDataIntoTag, [ data ], !0);
+        },
+        acr35ReadDataFromTag: function() {
+            return console.log("acr35ReadDataFromTag"), makePromise(window.nfcTools.acr35ReadDataFromTag, [], !0);
+        },
+        acr35ReadIdFromTag: function() {
+            return console.log("acr35ReadIdFromTag"), makePromise(window.nfcTools.acr35ReadIdFromTag, [], !0);
+        },
+        acr35GetDeviceStatus: function() {
+            return console.log("acr35GetDeviceStatus"), makePromise(window.nfcTools.acr35GetDeviceStatus, [], !0);
+        },
+        acr35GetDeviceId: function() {
+            return console.log("acr35GetDeviceId"), makePromise(window.nfcTools.acr35GetDeviceId, [], !0);
+        }
+    };
+    return nfcTools;
+} ]), angular.module("talon.settings", [ "ngStorage", "ngCordova", "talon.constants", "pouchdb", "gettext" ]), angular.module("talon.settings").controller("SyncController", [ "$scope", "$localStorage", "$settings", function($scope, $localStorage, $settings) {
+    $scope.setupVendor = function() {
+        $settings.sync().then(function() {
+            $scope.$broadcast("scroll.refreshComplete");
+        });
+    };
+} ]).controller("SettingsController", [ "$scope", "$localStorage", "$rootScope", "$nfcTools", function($scope, $localStorage, $rootScope, $nfcTools) {
+    function updateCountry(country) {
+        $localStorage.country = country, $rootScope.country = country;
+    }
+    function logout() {
+        delete $localStorage.authorizationData, $scope.showLoginModal();
+    }
+    $scope.country = $rootScope.country, $scope.logout = logout, $scope.updateCountry = updateCountry, $scope.useNDEF = function() {
+        $localStorage.useNDEF = !0;
+    };
+} ]), angular.module("talon.settings").service("$settings", [ "$timeout", "$q", "$cordovaFile", "httpUtils", "$localStorage", "$http", "$ionicPlatform", "talonRoot", "$rootScope", "$cordovaNetwork", "$cordovaDevice", "$cordovaFileTransfer", "keyDB", "cardLoadDB", "qrCodeDB", "cardLoadHistoryDB", "transactionHistoryDB", "encryption", "$injector", function($timeout, $q, $cordovaFile, httpUtils, $localStorage, $http, $ionicPlatform, talonRoot, $rootScope, $cordovaNetwork, $cordovaDevice, $cordovaFileTransfer, keyDB, cardLoadDB, qrCodeDB, cardLoadHistoryDB, transactionHistoryDB, encryption, $injector) {
+    function hashApplication() {
+        return $q.when([]);
+    }
+    function Sync() {
+        var successFunction = function() {
+            return $rootScope.lastSynced = moment().format("LLL"), !0;
+        }, def = $q.defer();
+        return httpUtils.checkConnectivity().then(function() {
+            $q.all([ $http.get(talonRoot + "api/App/MobileClient/DownloadKeyset"), LoadKeys(), LoadQRCodes(), LoadCardLoads(), UploadStoredData() ]).then(function(promises) {
+                var keyset = promises[0];
+                $localStorage.keyset = keyset.data, successFunction(), def.resolve();
+            })["catch"](def.resolve.bind(def));
+        })["catch"](function() {
+            LoadPayloadFromNetwork().then(UploadPayloadToNetwork).then(successFunction).then(def.resolve.bind(def));
+        }), def.promise;
+    }
+    function UploadStoredData() {
+        var cardLoads = cardLoadHistoryDB.all(), transactions = transactionHistoryDB.all();
+        return $q.all([ $http.post(talonRoot + "api/App/MobileClient/UploadCardLoads", cardLoads), $http.post(talonRoot + "api/App/MobileClient/UploadTransactions", transactions) ]).then(function() {
+            cardLoadHistoryDB.replace(), transactionHistoryDB.replace();
+        });
+    }
+    function LoadKeys() {
+        return console.log("Internet"), $http.get(talonRoot + "api/App/MobileClient/DownloadBeneficiaryKeys").then(function(k) {
+            return LoadKeysInternal(k.data);
+        });
+    }
+    function LoadKeysInternal(data) {
+        return keyDB.replace(data);
+    }
+    function LoadCardLoads() {
+        return console.log("Internet"), $http.get(talonRoot + "api/App/MobileClient/GenerateCardLoads").then(function(r) {
+            return LoadCardLoadsInternal(r.data);
+        });
+    }
+    function LoadCardLoadsInternal(data) {
+        return cardLoadDB.replace(data);
+    }
+    function LoadQRCodes() {
+        return console.log("Internet"), $http.get(talonRoot + "api/App/MobileClient/GenerateQRCodes").then(function(r) {
+            return LoadQRCodesInternal(r.data);
+        });
+    }
+    function LoadQRCodesInternal(data) {
+        return qrCodeDB.replace(data);
+    }
+    function UploadPayloadToNetwork(argument) {
+        var def = $q.defer();
+        return def.resolve(), def;
+    }
+    function LoadPayloadFromNetwork() {
+        var def = $q.defer();
+        return def.resolve(), def;
+    }
+    return {
+        hashApplication: hashApplication,
+        sync: Sync
+    };
+} ]), angular.module("talon.transaction", [ "ngStorage", "ngCordova", "talon.constants", "talon.nfc", "talon.common", "talon.settings", "pouchdb", "gettext" ]), 
+angular.module("talon.transaction").controller("PinController", [ "$scope", "$location", "$timeout", function($scope, $location, $timeout) {
+    $scope.cancel = function() {
+        $scope.passcode = "", $scope.modal.hide(), $scope.deferred.reject();
+    }, $scope.add = function(value) {
+        $scope.passcode.length < 4 && ($scope.passcode = $scope.passcode + value, 4 == $scope.passcode.length && $timeout(function() {
+            $scope.deferred.resolve($scope.passcode), $scope.modal.hide(), $timeout(function() {
+                $scope.passcode = "";
+            }, 100);
+        }, 0));
+    }, $scope["delete"] = function() {
+        $scope.passcode.length > 0 && ($scope.passcode = $scope.passcode.substring(0, $scope.passcode.length - 1));
+    };
+} ]).controller("POSController", [ "$scope", "$ionicModal", "$q", "transactionData", "beneficiaryData", "$cordovaSpinnerDialog", "$timeout", "$filter", "gettext", function($scope, $ionicModal, $q, transactionData, beneficiaryData, $cordovaSpinnerDialog, $timeout, $filter, gettext) {
+    function TransactionCompleted(amount) {
+        console.log("Finishing up" + amount), alert(translate(gettext("The transaction in the amount of")) + " " + $filter("currency")(amount, $scope.country.CurrencyIsoCode + " ") + " " + translate(gettext("has been completed.")));
+    }
+    var translate = $filter("translate");
+    $scope.decimalChar = ".", $scope.value = "", $scope.clear = function() {
+        $scope.value = "";
+    }, $scope["delete"] = function() {
+        var string = $scope.value.toString(10);
+        $scope.value = string.substring(0, string.length - 1);
+    }, $scope.addDigit = function(digit) {
+        (digit != $scope.decimalChar || -1 == $scope.value.indexOf($scope.decimalChar)) && ($scope.value = $scope.value + digit);
+    }, $scope.qrDialogOpen = !1, $scope.processQR = function() {
+        var failFunction = function(error) {
+            $scope.qrDialogOpen = !1, alert(error.message), console.log(error);
+        };
+        if (!$scope.qrDialogOpen) {
+            $scope.qrDialogOpen = !0;
+            var code = localStorage.qrCode;
+            return void $scope.showPinModal().then(function(pin) {
+                console.log(code), beneficiaryData.validateQRCode(code, pin).then(function(voucher) {
+                    $scope.showQRConfirmationModal(voucher, pin).then(function(vouchers) {
+                        var beneficiary = vouchers[0].beneficiary, voucherCodes = vouchers.map(function(v) {
+                            return v.voucherCode;
+                        });
+                        transactionData.debitQRCodes(voucherCodes, beneficiary).then(function() {
+                            var amountToBeCharged = vouchers.map(function(a) {
+                                return a.value;
+                            }).reduce(function(a, b) {
+                                return a + b;
+                            }, 0);
+                            TransactionCompleted(amountToBeCharged);
+                        })["catch"](failFunction);
+                    })["catch"](failFunction);
+                })["catch"](failFunction);
+            });
+        }
+    }, $scope.process = function() {
+        var afterTimeout = function(error) {
+            console.log(error), $cordovaSpinnerDialog.hide(), $scope.clear();
+        }, invalidCardOrPin = function(argument) {
+            alert(translate(gettext("Invalid PIN."))), $cordovaSpinnerDialog.hide();
+        }, noCredits = function(argument) {
+            alert(translate(gettext("Not enough credit"))), $cordovaSpinnerDialog.hide();
+        };
+        return $scope.value ? ($cordovaSpinnerDialog.show(translate(gettext("Read Card")), translate(gettext("Please hold NFC card close to reader")), !0), void beneficiaryData.readRawCardData().then(function(rawCardData) {
+            $cordovaSpinnerDialog.hide(), $scope.showPinModal().then(function(pin) {
+                var amountToBeCharged = parseFloat($scope.value, 10);
+                transactionData.loadCurrentData(pin, rawCardData).then(function(data) {
+                    $scope.clear(), $scope.showConfirmationModal({
+                        card: data,
+                        value: amountToBeCharged
+                    }, pin).then(function() {
+                        $cordovaSpinnerDialog.show(translate(gettext("Proccessing Transaction")), translate(gettext("Please wait")), !0), transactionData.debitCard(data, amountToBeCharged, pin).then(function() {
+                            $cordovaSpinnerDialog.hide(), TransactionCompleted(amountToBeCharged);
+                        }, noCredits, function(arg) {
+                            "CARD" === arg && ($cordovaSpinnerDialog.hide(), $cordovaSpinnerDialog.show(translate(gettext("Read Card")), translate(gettext("Please hold NFC card close to reader")), !0));
+                        })["catch"](noCredits);
+                    });
+                })["catch"](invalidCardOrPin);
+            })["catch"](afterTimeout);
+        })["catch"](afterTimeout)) : void alert(translate(gettext("There is no value to be charged.")));
+    };
+} ]).controller("ConfirmationController", [ "$scope", "$location", "$timeout", function($scope, $location, $timeout) {
+    $scope.$watch("data", function() {
+        $scope.data && ($scope.total = $scope.data.card.current[0] + $scope.data.card.pending[0] - $scope.data.value, console.log($scope.total));
+    }), $scope.cancel = function() {
+        delete $scope.data, delete $scope.pin, $scope.modal.hide(), $scope.deferred.reject();
+    }, $scope.pay = function() {
+        delete $scope.data, delete $scope.pin, $scope.modal.hide(), $scope.deferred.resolve();
+    };
+} ]).controller("QRConfirmationController", [ "$scope", "$location", "beneficiaryData", "$timeout", "gettext", "$filter", function($scope, $location, beneficiaryData, $timeout, gettext, $filter) {
+    var translate = $filter("translate");
+    $scope.addVoucher = function() {
+        var failFunction = function(error) {
+            alert(error.message), $cordovaSpinnerDialog.hide();
+        }, pin = $scope.pin;
+        window.cordova && window.cordova.plugins && cordova.plugins.barcodeScanner && cordova.plugins.barcodeScanner.scan(function(result) {
+            $timeout(function() {
+                var code = result.text;
+                return result.cancelled ? void console.log(result.cancelled) : void beneficiaryData.validateQRCode(code, pin).then(function(voucher) {
+                    var currentCodes = $scope.vouchers.map(function(v) {
+                        return v.voucherCode;
+                    }), beneficiary = $scope.vouchers[0].beneficiary;
+                    return moment.unix(voucher.validAfter) > moment() ? void alert(translate(gettext("Voucher can't be used before")) + " " + moment.unix(voucher.validAfter).format("L") + ".") : voucher.beneficiary.BeneficiaryId != beneficiary.BeneficiaryId ? void alert(translate(gettext("Voucher belongs to a different beneficiary."))) : currentCodes.indexOf(voucher.voucherCode) > -1 ? void alert(translate(gettext("Voucher already added"))) : void $scope.vouchers.push(voucher);
+                })["catch"](failFunction);
+            });
+        }, failFunction);
+    }, $scope.cancel = function() {
+        delete $scope.vouchers, delete $scope.pin, $scope.modal.hide(), $scope.deferred.reject();
+    }, $scope.pay = function() {
+        $scope.deferred.resolve($scope.vouchers), delete $scope.vouchers, delete $scope.pin, $scope.modal.hide();
+    };
+} ]), angular.module("talon.transaction").service("transactionData", [ "$http", "$localStorage", "$q", "talonRoot", "$timeout", "$cordovaFile", "$cordovaFileTransfer", "$settings", "transactionHistoryDB", "$rootScope", "cardLoadHistoryDB", "beneficiaryData", "httpUtils", "gettext", "$filter", function beneficiaryData($http, $localStorage, $q, talonRoot, $timeout, $cordovaFile, $cordovaFileTransfer, $settings, transactionHistoryDB, $rootScope, cardLoadHistoryDB, beneficiaryData, httpUtils, gettext, $filter) {
+    function loadCurrentData(pin, data) {
+        var failFunction = function(error) {
+            throw console.log(error), error;
+        };
+        return beneficiaryData.readCardData(pin, data).then(function(card) {
+            return beneficiaryData.fetchPendingLoads(pin, card).then(function(load) {
+                var beneficiary = card.beneficiary, currentPayload = card.payload, pendingPayload = load.pending;
+                return {
+                    beneficiary: beneficiary,
+                    current: currentPayload,
+                    pending: pendingPayload
+                };
+            })["catch"](failFunction);
+        })["catch"](failFunction);
+    }
+    function debitCard(info, amount, pin) {
+        var def = $q.defer(), failFunction = function(error) {
+            alert(error.message), def.reject([ -2, error ]);
+        }, currentPayload = info.current, pendingPayload = info.pending, beneficiary = info.beneficiary, value = currentPayload[0] + pendingPayload[0] - amount, time = pendingPayload[0] > 0 ? pendingPayload[1].unix() : currentPayload[1];
+        return value = Math.round(1e3 * value) / 1e3, $settings.hashApplication().then(function(hash) {
+            var payload = "1933|" + value + "|" + time.toString(16);
+            if (2 == $localStorage.authorizationData.tokenType) return alert(translate(gettext("You are logged in as an administrator. The POS mode is available for demo use only. The transaction will not be completed."))), 
+            void def.resolve();
+            if (time > currentPayload[1]) {
+                var cardLoad = {
+                    _id: beneficiary.BeneficiaryId + "-" + moment().unix(),
+                    beneficiaryId: beneficiary.BeneficiaryId,
+                    amount: pendingPayload[0],
+                    date: moment().unix(),
+                    distributionDate: pendingPayload[1].unix()
+                };
+                cardLoadHistoryDB.upsert(cardLoad._id, cardLoad);
+            }
+            $timeout(function() {
+                def.notify("CARD"), beneficiaryData.updateCardData(payload, beneficiary.CardKey, pin, beneficiary.CardId).then(function(update) {
+                    processTransaction({
+                        type: 2,
+                        beneficiaryId: beneficiary.BeneficiaryId,
+                        amountCredited: amount,
+                        amountRemaining: value,
+                        date: moment().unix(),
+                        checksum: hash
+                    }).then(function() {
+                        def.resolve();
+                    })["catch"](failFunction);
+                })["catch"](failFunction);
+            }, 100);
+        })["catch"](failFunction), def.promise;
+    }
+    function debitQRCodes(vouchers, beneficiary) {
+        var def = $q.defer(), failFunction = function(error) {
+            console.log("Failed!!!!"), def.resolve();
+        };
+        return $settings.hashApplication().then(function(hash) {
+            if (2 == $localStorage.authorizationData.tokenType) return alert(translate(gettext("You are logged in as an administrator. The POS mode is available for demo use only. The transaction will not be completed."))), 
+            void def.resolve();
+            var promises = vouchers.map(function(v) {
+                return processTransaction({
+                    type: 3,
+                    beneficiaryId: beneficiary.BeneficiaryId,
+                    voucherCode: v,
+                    date: moment().unix(),
+                    checksum: hash
+                });
+            });
+            $q.when(promises).then(function(results) {
+                console.log(results), console.log("Transaction Processed!!!"), def.resolve();
+            })["catch"](failFunction);
+        })["catch"](failFunction), def.promise;
+    }
+    function processTransaction(transaction) {
+        var def = $q.defer();
+        return transaction.transactionCode = forge.util.bytesToHex(forge.random.getBytes(8)), transaction._id = transaction.beneficiaryId + "-" + transaction.date + "-" + transaction.transactionCode, 
+        transaction.location = $rootScope.currentLocation, transaction.quarantine = !1, httpUtils.checkConnectivity().then(function() {
+            console.log("Process Transaction Online");
+            var url = 2 == transaction.type ? "ProcessNFCTransaction" : "ProcessQRTransaction";
+            $http.post(talonRoot + "api/App/MobileClient/" + url, transaction).then(function(response) {
+                return response.data && (response = response.data), response.Success ? (transaction.confirmationCode = response.ConfirmationCode, transactionHistoryDB.upsert(transaction._id, transaction), 
+                void def.resolve()) : void def.reject(response.message);
+            });
+        })["catch"](function() {
+            transaction.quarantine = !0, transactionHistoryDB.upsert(transaction._id, transaction), def.resolve();
+        }), def.promise;
+    }
+    var translate = $filter("translate");
+    return {
+        processTransaction: processTransaction,
+        loadCurrentData: loadCurrentData,
+        debitCard: debitCard,
+        debitQRCodes: debitQRCodes
+    };
+} ]);
